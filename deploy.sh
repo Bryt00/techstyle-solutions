@@ -28,11 +28,11 @@ cd $PROJECT_DIR
 
 # Note: Assuming code is already in $PROJECT_DIR via Git or SFTP
 # If using git, uncomment and modify below:
-# if [ ! -d ".git" ]; then
-#     git clone https://github.com/yourusername/kelstechsystems.git .
-# else
-#     git pull origin main
-# fi
+if [ ! -d ".git" ]; then
+    git clone https://github.com/Bryt00/techstyle-solutions.git .
+else
+    git pull origin main
+fi
 
 # 3. Create Virtual Environment and Install Requirements
 echo "=> Setting up Python Virtual Environment..."
