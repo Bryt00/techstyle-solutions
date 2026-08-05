@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}{{ business_info.seo_title_suffix }}{% endblock %}</title>
+    <meta name="description" content="{{ business_info.seo_meta_description }}">
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS CDN & DaisyUI CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/daisyui@4.12.10/dist/full.min.css" rel="stylesheet" type="text/css" />
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <!-- Configure Terra Theme Palette in Tailwind -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        terra: {
+                            50: '#FDFBF7',
+                            100: '#F9F4EB',
+                            200: '#F2E5D4',
+                            300: '#E5CDAE',
+                            400: '#D9AB7E',
+                            500: '#C85A32', /* Terracotta Primary */
+                            600: '#B54924',
+                            700: '#94371A',
+                            800: '#752C18',
+                            900: '#602617',
+                        },
+                        forest: {
+                            50: '#F4F7F5',
+                            100: '#E3EBE6',
+                            500: '#4A5D4E',
+                            800: '#2D3732', /* Forest Clay Secondary */
+                            900: '#1F2723',
+                        },
+                        sand: {
+                            100: '#FBF8F5', /* Base Background */
+                            200: '#F3EDDF',
+                            300: '#E7DCC7',
+                            500: '#E6A15C', /* Amber Gold Accent */
+                        },
+                        darkcharcoal: '#1F2421',
+                    },
+                    fontFamily: {
+                        sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+                        display: ['"Space Grotesk"', 'sans-serif'],
+                    },
+                    boxShadow: {
+                        'terra-glow': '0 10px 30px -10px rgba(200, 90, 50, 0.3)',
+                        'soft-card': '0 4px 20px -2px rgba(45, 55, 50, 0.08)',
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #FBF8F5;
+            color: #1F2421;
+        }
+        .bg-terra-gradient {
+            background: linear-gradient(135deg, #1F2723 0%, #2D3732 60%, #602617 100%);
+        }
+        .text-gradient-terra {
+            background: linear-gradient(135deg, #C85A32 0%, #E6A15C 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(229, 205, 174, 0.3);
+        }
+        .glass-card-dark {
+            background: rgba(31, 39, 35, 0.85);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(200, 90, 50, 0.2);
+        }
+
+        /* Animation Keyframes */
+        @keyframes floatSlow {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-12px) rotate(1deg); }
+        }
+        @keyframes floatReverse {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(12px) rotate(-1deg); }
+        }
+        @keyframes pulseGlow {
+            0%, 100% { box-shadow: 0 0 15px rgba(200, 90, 50, 0.2); }
+            50% { box-shadow: 0 0 30px rgba(200, 90, 50, 0.5); }
+        }
+        @keyframes rotateSlow {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .animate-float {
+            animation: floatSlow 6s ease-in-out infinite;
+        }
+        .animate-float-delayed {
+            animation: floatReverse 8s ease-in-out infinite 2s;
+        }
+        .animate-pulse-glow {
+            animation: pulseGlow 3s ease-in-out infinite;
+        }
+        .animate-rotate-slow {
+            animation: rotateSlow 30s linear infinite;
+        }
+
+        /* Smooth Interactive Card & Content Physics */
+        .reveal-on-scroll, .reveal-left, .reveal-right, .reveal-scale {
+            transition: opacity 0.5s ease-out, transform 0.5s ease-out;
+            opacity: 1;
+            transform: translateY(0) translateX(0) scale(1);
+        }
+
+        /* Top Scroll Progress Bar */
+        #scroll-progress-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 3.5px;
+            background: linear-gradient(90deg, #C85A32 0%, #E6A15C 50%, #2D3732 100%);
+            z-index: 100;
+            width: 0%;
+            transition: width 0.1s linear;
+        }
+
+        /* Sticky Header Shrink Effect */
+        header.header-scrolled {
+            height: 4.25rem !important;
+            box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.1);
+            background: rgba(251, 248, 245, 0.95) !important;
+        }
+
+        /* Back to top button */
+        #back-to-top-btn {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            z-index: 50;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(20px) scale(0.85);
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        #back-to-top-btn.visible {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0) scale(1);
+        }
+
+        /* Nav Link Active Indicator */
+        .nav-link.nav-active {
+            color: #C85A32 !important;
+            font-weight: 700 !important;
+            position: relative;
+        }
+        .nav-link.nav-active::after {
+            content: '';
+            position: absolute;
+            bottom: -4px;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background-color: #C85A32;
+            border-radius: 2px;
+        }
+
+        /* Page header banner */
+        .page-header-banner {
+            background: linear-gradient(135deg, #1F2723 0%, #2D3732 60%, #602617 100%);
+            position: relative;
+            overflow: hidden;
+        }
+        .page-header-banner::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -20%;
+            width: 500px;
+            height: 500px;
+            background: radial-gradient(circle, rgba(200, 90, 50, 0.15) 0%, transparent 70%);
+            border-radius: 50%;
+        }
+        .page-header-banner::after {
+            content: '';
+            position: absolute;
+            bottom: -30%;
+            left: -10%;
+            width: 400px;
+            height: 400px;
+            background: radial-gradient(circle, rgba(230, 161, 92, 0.1) 0%, transparent 70%);
+            border-radius: 50%;
+        }
+    </style>
+    {% block extra_head %}{% endblock %}
+</head>
+<body class="min-h-screen flex flex-col antialiased selection:bg-terra-500 selection:text-white">
+
+    <!-- Top Scroll Progress Indicator Bar -->
+    <div id="scroll-progress-bar"></div>
+
+    <!-- Top Status Banner -->
+    <div class="bg-forest-900 text-sand-200 text-xs py-2 px-4 border-b border-forest-800/80">
+        <div class="max-w-7xl mx-auto flex flex-wrap justify-between items-center gap-2">
+            <div class="flex items-center gap-3">
+                <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 text-[11px] font-semibold border border-emerald-500/30">
+                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                    {{ business_info.announcement_banner }}
+                </span>
+                <span class="hidden sm:inline text-sand-300/60">|</span>
+                <span class="hidden sm:inline">📍 {{ business_info.address }}</span>
+            </div>
+            <div class="flex items-center gap-4">
+                <a href="tel:{{ business_info.phone_primary }}" class="hover:text-terra-400 transition-colors flex items-center gap-1 font-medium">
+                    <i data-lucide="phone" class="w-3.5 h-3.5 text-terra-500"></i>
+                    <span>{{ business_info.phone_primary }}</span>
+                </a>
+                <span class="text-sand-300/60">|</span>
+                <a href="https://wa.me/{{ business_info.whatsapp_number }}" target="_blank" class="hover:text-emerald-400 transition-colors flex items-center gap-1 font-medium text-emerald-400">
+                    <i data-lucide="message-circle" class="w-3.5 h-3.5"></i>
+                    <span>WhatsApp</span>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Navigation Bar -->
+    <header id="main-header" class="sticky top-0 z-40 bg-sand-100/90 backdrop-blur-md border-b border-sand-300/60 transition-all duration-300 h-20">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-full flex items-center justify-between">
+            <!-- Brand Logo -->
+            <a href="{% url 'services:home' %}" class="flex items-center gap-3 group">
+                <div class="w-11 h-11 rounded-xl bg-terra-500 flex items-center justify-center text-white shadow-terra-glow group-hover:scale-105 transition-transform duration-300 overflow-hidden">
+                    {% if business_info.site_logo %}
+                        <img src="{{ business_info.site_logo.url }}" alt="Logo" class="w-full h-full object-cover" />
+                    {% else %}
+                        <i data-lucide="cpu" class="w-6 h-6"></i>
+                    {% endif %}
+                </div>
+                <div>
+                    <span class="font-display font-extrabold text-xl text-forest-900 tracking-tight block leading-none">
+                        TECHSTYLE <span class="text-terra-500">SOLUTIONS</span>
+                    </span>
+                    <span class="text-[11px] font-semibold tracking-wider text-forest-500 uppercase">Web, CCTV & IT Hub</span>
+                </div>
+            </a>
+
+            <!-- Desktop Nav Links -->
+            <nav id="desktop-nav" class="hidden md:flex items-center gap-7 font-medium text-sm text-forest-900">
+                <a href="{% url 'services:services' %}" class="nav-link hover:text-terra-500 transition-colors {% if request.path == '/services/' %}nav-active{% endif %}">Services</a>
+                <a href="{% url 'services:cctv' %}" class="nav-link hover:text-terra-500 transition-colors {% if request.path == '/cctv/' %}nav-active{% endif %}">CCTV</a>
+                <a href="{% url 'services:networking' %}" class="nav-link hover:text-terra-500 transition-colors {% if request.path == '/networking/' %}nav-active{% endif %}">Networking</a>
+                <a href="{% url 'services:repairs' %}" class="nav-link hover:text-terra-500 transition-colors {% if request.path == '/repairs/' %}nav-active{% endif %}">Repairs</a>
+                <a href="{% url 'services:portfolio' %}" class="nav-link hover:text-terra-500 transition-colors {% if '/portfolio' in request.path %}nav-active{% endif %}">Portfolio</a>
+                <a href="{% url 'services:contact' %}" class="nav-link hover:text-terra-500 transition-colors {% if request.path == '/contact/' %}nav-active{% endif %}">Contact</a>
+            </nav>
+
+            <!-- Action Buttons -->
+            <div class="flex items-center gap-3">
+                <button onclick="openTrackModal()" class="btn btn-ghost btn-sm text-forest-900 hover:text-terra-500 font-semibold gap-1.5 hidden sm:flex">
+                    <i data-lucide="search" class="w-4 h-4 text-terra-500"></i>
+                    <span>Track Ticket</span>
+                </button>
+                
+                <button onclick="openBookingModal('General Inquiry')" class="btn bg-terra-500 hover:bg-terra-600 border-none text-white font-semibold text-sm shadow-terra-glow transition-all hover:scale-[1.02] active:scale-95 px-5">
+                    <i data-lucide="calendar" class="w-4 h-4"></i>
+                    <span>Request Quote</span>
+                </button>
+
+                <!-- Mobile Menu Button -->
+                <button onclick="toggleMobileMenu()" class="md:hidden p-2 text-forest-900 hover:bg-sand-200 rounded-lg">
+                    <i data-lucide="menu" class="w-6 h-6"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Mobile Navigation Menu -->
+        <div id="mobile-menu" class="hidden md:hidden border-t border-sand-300 bg-sand-100 px-4 pt-3 pb-6 space-y-3">
+            <a href="{% url 'services:home' %}" onclick="toggleMobileMenu()" class="block py-2 text-forest-900 font-medium hover:text-terra-500">Home</a>
+            <a href="{% url 'services:services' %}" onclick="toggleMobileMenu()" class="block py-2 text-forest-900 font-medium hover:text-terra-500">Services Catalog</a>
+            <a href="{% url 'services:cctv' %}" onclick="toggleMobileMenu()" class="block py-2 text-forest-900 font-medium hover:text-terra-500">CCTV & Security</a>
+            <a href="{% url 'services:networking' %}" onclick="toggleMobileMenu()" class="block py-2 text-forest-900 font-medium hover:text-terra-500">Networking & Cabling</a>
+            <a href="{% url 'services:repairs' %}" onclick="toggleMobileMenu()" class="block py-2 text-forest-900 font-medium hover:text-terra-500">Laptop Repair Estimator</a>
+            <a href="{% url 'services:portfolio' %}" onclick="toggleMobileMenu()" class="block py-2 text-forest-900 font-medium hover:text-terra-500">Our Portfolio</a>
+            <a href="{% url 'services:contact' %}" onclick="toggleMobileMenu()" class="block py-2 text-forest-900 font-medium hover:text-terra-500">Contact & FAQs</a>
+            <button onclick="toggleMobileMenu(); openTrackModal();" class="w-full btn btn-outline btn-terra text-terra-600 gap-2">
+                <i data-lucide="search" class="w-4 h-4"></i>
+                Track Project / Repair Ticket
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Content Area -->
+    <main class="flex-grow">
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-forest-900 text-sand-200 pt-16 pb-12 border-t border-forest-800">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10">
+                
+                <!-- Col 1: About -->
+                <div class="space-y-4">
+                    <div class="flex items-center gap-3">
+                        <div class="w-9 h-9 rounded-lg bg-terra-500 flex items-center justify-center text-white font-bold overflow-hidden">
+                            {% if business_info.site_logo %}
+                                <img src="{{ business_info.site_logo.url }}" alt="Logo" class="w-full h-full object-cover" />
+                            {% else %}
+                                <i data-lucide="cpu" class="w-5 h-5"></i>
+                            {% endif %}
+                        </div>
+                        <span class="font-display font-bold text-lg text-white">TECHSTYLE <span class="text-terra-400">SOLUTIONS</span></span>
+                    </div>
+                    <p class="text-sm text-sand-300/80 leading-relaxed">
+                        {{ business_info.about_us_footer }}
+                    </p>
+                    <div class="flex gap-3 text-sand-300 pt-2">
+                        <a href="{{ business_info.facebook_url }}" class="w-8 h-8 rounded-full bg-forest-800 hover:bg-terra-500 hover:text-white flex items-center justify-center transition-colors">
+                            <i data-lucide="facebook" class="w-4 h-4"></i>
+                        </a>
+                        <a href="{{ business_info.instagram_url }}" class="w-8 h-8 rounded-full bg-forest-800 hover:bg-terra-500 hover:text-white flex items-center justify-center transition-colors">
+                            <i data-lucide="instagram" class="w-4 h-4"></i>
+                        </a>
+                        <a href="{{ business_info.twitter_url }}" class="w-8 h-8 rounded-full bg-forest-800 hover:bg-terra-500 hover:text-white flex items-center justify-center transition-colors">
+                            <i data-lucide="twitter" class="w-4 h-4"></i>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Col 2: Business Hours & Location -->
+                <div>
+                    <h3 class="font-display font-bold text-white text-base mb-4 border-l-2 border-terra-500 pl-3">Operating Hours & Store</h3>
+                    <ul class="space-y-2.5 text-sm text-sand-300/80">
+                        <li class="flex justify-between border-b border-forest-800/60 pb-1.5">
+                            <span>Monday - Friday:</span>
+                            <span class="text-white font-semibold">{{ business_info.opening_hours_weekday }}</span>
+                        </li>
+                        <li class="flex justify-between border-b border-forest-800/60 pb-1.5">
+                            <span>Saturday:</span>
+                            <span class="text-white font-semibold">{{ business_info.opening_hours_saturday }}</span>
+                        </li>
+                        <li class="flex justify-between border-b border-forest-800/60 pb-1.5">
+                            <span>Sunday:</span>
+                            <span class="text-terra-400 font-semibold">{{ business_info.opening_hours_sunday }}</span>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Col 3: Quick Links -->
+                <div>
+                    <h3 class="font-display font-bold text-white text-base mb-4 border-l-2 border-terra-500 pl-3">Quick Links</h3>
+                    <ul class="space-y-2 text-sm text-sand-300/80">
+                        <li><a href="{% url 'services:services' %}" class="hover:text-terra-400 transition-colors">Services Catalog</a></li>
+                        <li><a href="{% url 'services:cctv' %}" class="hover:text-terra-400 transition-colors">CCTV & Security Systems</a></li>
+                        <li><a href="{% url 'services:networking' %}" class="hover:text-terra-400 transition-colors">Networking & Cabling</a></li>
+                        <li><a href="{% url 'services:repairs' %}" class="hover:text-terra-400 transition-colors">Laptop Repairs</a></li>
+                        <li><a href="{% url 'services:portfolio' %}" class="hover:text-terra-400 transition-colors">Our Portfolio</a></li>
+                        <li><a href="{% url 'services:contact' %}" class="hover:text-terra-400 transition-colors">Contact & FAQs</a></li>
+                    </ul>
+                </div>
+
+                <!-- Col 4: Contact -->
+                <div>
+                    <h3 class="font-display font-bold text-white text-base mb-4 border-l-2 border-terra-500 pl-3">Contact Support</h3>
+                    <div class="space-y-3 text-sm text-sand-300/80">
+                        <p class="flex items-start gap-2.5">
+                            <i data-lucide="map-pin" class="w-4 h-4 text-terra-400 shrink-0 mt-1"></i>
+                            <span>{{ business_info.address }}</span>
+                        </p>
+                        <p class="flex items-center gap-2.5">
+                            <i data-lucide="phone-call" class="w-4 h-4 text-terra-400 shrink-0"></i>
+                            <span>{{ business_info.phone_primary }} {% if business_info.phone_secondary %}/ {{ business_info.phone_secondary }}{% endif %}</span>
+                        </p>
+                        <p class="flex items-center gap-2.5">
+                            <i data-lucide="mail" class="w-4 h-4 text-terra-400 shrink-0"></i>
+                            <span>{{ business_info.email }}</span>
+                        </p>
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="mt-12 pt-6 border-t border-forest-800 text-center text-xs text-sand-300/60 flex flex-col sm:flex-row justify-between items-center gap-3">
+                <p>© 2026 {{ business_info.business_name }}. All rights reserved.</p>
+                <p class="flex items-center gap-1">
+                    Powered by <span class="text-terra-400 font-semibold">Django</span> & <span class="text-sand-200">Tailwind CSS (Terra Theme)</span>
+                </p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Global Repair / Project Tracking Modal -->
+    <div id="track-modal" class="modal">
+        <div class="modal-box bg-white max-w-md border border-sand-300">
+            <button onclick="closeTrackModal()" class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">✕</button>
+            <h3 class="font-display font-bold text-lg text-forest-900 flex items-center gap-2">
+                <i data-lucide="search" class="w-5 h-5 text-terra-500"></i>
+                Track Project / Repair Ticket
+            </h3>
+            <p class="text-xs text-stone-600 mt-1 mb-4">Enter your Reference ID (e.g., TS-782194) received upon ticket creation.</p>
+            
+            <div class="space-y-4">
+                <div class="form-control">
+                    <label class="label text-xs font-semibold text-forest-900">Ticket Reference ID</label>
+                    <div class="join w-full">
+                        <input type="text" id="track-ref-input" placeholder="e.g. TS-782194" class="input input-bordered join-item w-full uppercase font-mono text-sm border-stone-300 focus:border-terra-500 focus:outline-none" />
+                        <button onclick="performTrackLookup()" class="btn bg-terra-500 hover:bg-terra-600 text-white join-item">Track</button>
+                    </div>
+                </div>
+
+                <div id="track-result-container" class="hidden rounded-xl p-4 bg-sand-100 border border-sand-300 space-y-3">
+                    <!-- Dynamic status returned by AJAX -->
+                </div>
+            </div>
+        </div>
+        <div class="modal-backdrop bg-forest-900/60" onclick="closeTrackModal()"></div>
+    </div>
+
+    <!-- Global Service Booking & Quote Drawer Modal -->
+    <div id="booking-modal" class="modal">
+        <div class="modal-box bg-white max-w-lg border border-sand-300">
+            <button onclick="closeBookingModal()" class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">✕</button>
+            <h3 class="font-display font-bold text-xl text-forest-900 flex items-center gap-2">
+                <i data-lucide="calendar-check" class="w-6 h-6 text-terra-500"></i>
+                <span id="booking-modal-title">Request Quote / Book Service</span>
+            </h3>
+            <p class="text-xs text-stone-600 mt-1 mb-4">Fill out your details below. Our TechStyle specialists will confirm your request within 15 minutes.</p>
+
+            <form id="booking-form" onsubmit="handleBookingSubmit(event)" class="space-y-3">
+                {% csrf_token %}
+                <input type="hidden" id="booking-service-type" name="service_type" value="General Inquiry">
+                
+                <div class="form-control">
+                    <label class="label text-xs font-semibold text-forest-900">Your Full Name *</label>
+                    <input type="text" name="customer_name" required placeholder="e.g. Kwame Asante" class="input input-bordered input-sm w-full border-stone-300 focus:border-terra-500" />
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div class="form-control">
+                        <label class="label text-xs font-semibold text-forest-900">Phone Number *</label>
+                        <input type="tel" name="customer_phone" required placeholder="e.g. 024 123 4567" class="input input-bordered input-sm w-full border-stone-300 focus:border-terra-500" />
+                    </div>
+                    <div class="form-control">
+                        <label class="label text-xs font-semibold text-forest-900">Email Address (Optional)</label>
+                        <input type="email" name="customer_email" placeholder="kwame@example.com" class="input input-bordered input-sm w-full border-stone-300 focus:border-terra-500" />
+                    </div>
+                </div>
+
+                <div class="form-control">
+                    <label class="label text-xs font-semibold text-forest-900">Preferred Appointment / Launch Date</label>
+                    <input type="date" name="preferred_date" class="input input-bordered input-sm w-full border-stone-300 focus:border-terra-500" />
+                </div>
+
+                <div class="form-control">
+                    <label class="label text-xs font-semibold text-forest-900">Service Requirements / Project Details *</label>
+                    <textarea name="details" id="booking-details-field" required rows="3" placeholder="Describe your web app idea, CCTV camera count, networking equipment order, or laptop issue..." class="textarea textarea-bordered textarea-sm w-full border-stone-300 focus:border-terra-500"></textarea>
+                </div>
+
+                <div class="pt-2">
+                    <button type="submit" id="booking-submit-btn" class="btn bg-terra-500 hover:bg-terra-600 text-white w-full shadow-terra-glow font-bold">
+                        <span>Submit Request & Get Reference Code</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+        <div class="modal-backdrop bg-forest-900/60" onclick="closeBookingModal()"></div>
+    </div>
+
+    <!-- Scripts -->
+    <script>
+        lucide.createIcons();
+
+        function toggleMobileMenu() {
+            const menu = document.getElementById('mobile-menu');
+            menu.classList.toggle('hidden');
+        }
+
+        function openTrackModal(ref = '') {
+            document.getElementById('track-modal').classList.add('modal-open');
+            if (ref) {
+                document.getElementById('track-ref-input').value = ref;
+                performTrackLookup();
+            }
+        }
+
+        function closeTrackModal() {
+            document.getElementById('track-modal').classList.remove('modal-open');
+        }
+
+        function openBookingModal(serviceName = 'General Service', prefillDetails = '') {
+            document.getElementById('booking-service-type').value = serviceName;
+            document.getElementById('booking-modal-title').innerText = `Request Quote: ${serviceName}`;
+            if (prefillDetails) {
+                document.getElementById('booking-details-field').value = prefillDetails;
+            }
+            document.getElementById('booking-modal').classList.add('modal-open');
+        }
+
+        function closeBookingModal() {
+            document.getElementById('booking-modal').classList.remove('modal-open');
+        }
+
+        async function performTrackLookup() {
+            const ref = document.getElementById('track-ref-input').value.trim();
+            const container = document.getElementById('track-result-container');
+            if (!ref) return;
+
+            container.classList.remove('hidden');
+            container.innerHTML = '<div class="text-center py-4 text-xs text-stone-500">Searching ticket...</div>';
+
+            try {
+                const response = await fetch(`{% url 'services:api_track_repair' %}?ref=${encodeURIComponent(ref)}`);
+                const data = await response.json();
+
+                if (!data.found) {
+                    container.innerHTML = `<div class="p-3 bg-red-50 text-red-700 rounded-lg text-xs font-medium border border-red-200">${data.message}</div>`;
+                    return;
+                }
+
+                container.innerHTML = `
+                    <div class="space-y-2 text-xs">
+                        <div class="flex justify-between items-center pb-2 border-b border-sand-300">
+                            <span class="font-bold text-forest-900 text-sm">${data.booking_ref}</span>
+                            <span class="px-2 py-0.5 rounded-full font-bold bg-terra-100 text-terra-700">${data.status_display}</span>
+                        </div>
+                        <p><strong>Customer:</strong> ${data.customer_name}</p>
+                        <p><strong>Service:</strong> ${data.service_type}</p>
+                        <div class="space-y-1 pt-1">
+                            <div class="flex justify-between text-[11px] font-semibold text-stone-600">
+                                <span>Progress</span>
+                                <span>${data.progress_percentage}%</span>
+                            </div>
+                            <div class="w-full bg-sand-300 rounded-full h-2">
+                                <div class="bg-terra-500 h-2 rounded-full transition-all duration-500" style="width: ${data.progress_percentage}%"></div>
+                            </div>
+                        </div>
+                        <div class="p-2.5 bg-white rounded-lg border border-sand-300 mt-2">
+                            <span class="font-bold text-forest-900 block mb-1">TechStyle Notes:</span>
+                            <p class="text-stone-600">${data.status_notes}</p>
+                        </div>
+                        <p class="text-[10px] text-stone-400 text-right">Created: ${data.created_at}</p>
+                    </div>
+                `;
+            } catch (err) {
+                container.innerHTML = `<div class="p-3 bg-red-50 text-red-700 rounded-lg text-xs font-medium">Error fetching status. Please try again.</div>`;
+            }
+        }
+
+        async function handleBookingSubmit(e) {
+            e.preventDefault();
+            const form = e.target;
+            const btn = document.getElementById('booking-submit-btn');
+            btn.disabled = true;
+            btn.innerHTML = '<span>Submitting...</span>';
+
+            const formData = new FormData(form);
+            const payload = {};
+            formData.forEach((val, key) => payload[key] = val);
+
+            try {
+                const response = await fetch(`{% url 'services:api_create_booking' %}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': formData.get('csrfmiddlewaretoken')
+                    },
+                    body: JSON.stringify(payload)
+                });
+                const data = await response.json();
+
+                if (data.success) {
+                    closeBookingModal();
+                    form.reset();
+                    openTrackModal(data.booking_ref);
+                } else {
+                    alert(data.error || 'Submission failed.');
+                }
+            } catch (err) {
+                alert('Network error submitting request.');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<span>Submit Request & Get Reference Code</span>';
+            }
+        }
+    </script>
+
+    <!-- Floating Back to Top Button -->
+    <button id="back-to-top-btn" onclick="scrollToTop()" type="button" class="btn bg-terra-500 hover:bg-terra-600 border-none text-white shadow-2xl shadow-terra-500/50 rounded-full px-4 py-2.5 flex items-center gap-2 transition-all hover:scale-105 active:scale-95">
+        <i data-lucide="arrow-up" class="w-4 h-4 text-white"></i>
+        <span class="text-xs font-bold uppercase tracking-wider hidden sm:inline text-white">Back to Top</span>
+    </button>
+
+    <!-- Scripts -->
+    <script>
+        lucide.createIcons();
+
+        function scrollToTop() {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // Scroll Driven Effects Handler (Progress bar, Header shrink, Back to top visibility)
+        window.addEventListener('scroll', () => {
+            const scrollTop = window.scrollY || document.documentElement.scrollTop;
+            const docHeight = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+            const scrollPercent = Math.min((scrollTop / docHeight) * 100, 100);
+
+            // 1. Update top scroll progress bar
+            const progressBar = document.getElementById('scroll-progress-bar');
+            if (progressBar) progressBar.style.width = `${scrollPercent}%`;
+
+            // 2. Sticky Header shrink effect
+            const header = document.getElementById('main-header');
+            if (header) {
+                if (scrollTop > 60) {
+                    header.classList.add('header-scrolled');
+                } else {
+                    header.classList.remove('header-scrolled');
+                }
+            }
+
+            // 3. Back to Top Button visibility (triggers after 80px scroll)
+            const backBtn = document.getElementById('back-to-top-btn');
+            if (backBtn) {
+                if (scrollTop > 80) {
+                    backBtn.classList.add('visible');
+                } else {
+                    backBtn.classList.remove('visible');
+                }
+            }
+        });
+
+    </script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

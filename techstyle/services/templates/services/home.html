@@ -1,0 +1,303 @@
+{% extends 'base.html' %}
+
+{% block title %}TechStyle Solutions | Web Apps, CCTV Systems, Networking & Laptop Repairs{% endblock %}
+
+{% block content %}
+<!-- Hero Section with Floating Orbs & Ambient Animations -->
+<section class="relative bg-terra-gradient text-white overflow-hidden py-20 lg:py-28 border-b border-terra-700/40">
+    <!-- Decorative Floating Ambient Glowing Orbs -->
+    <div class="absolute -top-32 -right-32 w-96 h-96 bg-terra-500/30 rounded-full blur-3xl pointer-events-none animate-float"></div>
+    <div class="absolute -bottom-32 -left-32 w-96 h-96 bg-sand-500/20 rounded-full blur-3xl pointer-events-none animate-float-delayed"></div>
+    <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-terra-600/10 rounded-full blur-3xl pointer-events-none animate-rotate-slow"></div>
+
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+            
+            <!-- Left Hero Content -->
+            <div class="lg:col-span-7 space-y-6 reveal-left">
+                <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-terra-500/20 border border-terra-500/30 text-terra-400 text-xs font-semibold">
+                    <i data-lucide="sparkles" class="w-3.5 h-3.5"></i>
+                    <span>Next-Gen Tech Infrastructure</span>
+                </div>
+
+                <h1 class="font-display font-extrabold text-4xl sm:text-5xl lg:text-6xl tracking-tight leading-none">
+                    {{ business_info.hero_title }}
+                </h1>
+
+                <p class="text-sand-200/80 text-base sm:text-lg max-w-2xl leading-relaxed">
+                    {{ business_info.hero_subtitle }}
+                </p>
+
+                <!-- Hero Action Buttons -->
+                <div class="flex flex-wrap gap-4 pt-2">
+                    <a href="{% url 'services:services' %}" class="btn bg-terra-500 hover:bg-terra-600 border-none text-white font-bold px-6 shadow-terra-glow hover:scale-105 transition-all">
+                        <i data-lucide="layers" class="w-4 h-4"></i>
+                        <span>Explore Services</span>
+                    </a>
+                    <a href="{% url 'services:cctv' %}" class="btn bg-forest-800 hover:bg-forest-900 border border-sand-300/30 text-sand-100 font-bold px-6 hover:scale-105 transition-all">
+                        <i data-lucide="shield" class="w-4 h-4 text-terra-400"></i>
+                        <span>CCTV Packages</span>
+                    </a>
+                    <a href="{% url 'services:portfolio' %}" class="btn btn-ghost text-sand-200 hover:text-white underline-offset-4 font-semibold group">
+                        <span>View Portfolio</span>
+                        <span class="inline-block transition-transform duration-300 group-hover:translate-x-1">→</span>
+                    </a>
+                </div>
+
+                <!-- Animated Trust Metrics -->
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-8 border-t border-forest-800/80 max-w-xl">
+                    {% for metric in metrics %}
+                    <div class="space-y-1">
+                        <div class="font-display font-extrabold text-2xl sm:text-3xl text-sand-100 flex items-center">
+                            <span class="counter-val" data-target="{{ metric.value }}">0</span><span>{{ metric.suffix }}</span>
+                        </div>
+                        <div class="text-[11px] text-sand-300/70 font-medium">{{ metric.label }}</div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Right Hero Card / Quick Interactive Ticket Lookup -->
+            <div class="lg:col-span-5 reveal-right">
+                <div class="glass-card-dark rounded-3xl p-6 sm:p-8 shadow-2xl space-y-6 interactive-card border border-terra-500/20">
+                    <div class="flex items-center justify-between border-b border-forest-800 pb-4">
+                        <div>
+                            <span class="text-xs font-bold uppercase tracking-wider text-terra-400">Live Support Portal</span>
+                            <h2 class="font-display font-bold text-xl text-white">Track Project / Repair Ticket</h2>
+                        </div>
+                        <div class="w-10 h-10 rounded-xl bg-terra-500/20 text-terra-400 flex items-center justify-center animate-pulse">
+                            <i data-lucide="activity" class="w-5 h-5"></i>
+                        </div>
+                    </div>
+
+                    <p class="text-xs text-sand-300/80">Already requested a web app, CCTV deployment, network drop, or laptop repair? Enter your reference ID below:</p>
+
+                    <div class="space-y-3">
+                        <div class="join w-full">
+                            <input type="text" id="hero-track-input" placeholder="e.g. TS-782194" class="input input-bordered join-item w-full uppercase font-mono text-sm bg-forest-900/80 border-forest-700 text-white placeholder-sand-300/40 focus:border-terra-500 focus:outline-none" />
+                            <button onclick="heroTrackLookup()" class="btn bg-terra-500 hover:bg-terra-600 text-white border-none join-item px-5 transition-transform active:scale-95">Track</button>
+                        </div>
+                        <div id="hero-track-result" class="hidden rounded-xl p-4 bg-forest-900/90 border border-forest-700 text-xs transition-all duration-300"></div>
+                    </div>
+
+                    <!-- Quick Sample Codes helper -->
+                    <div class="text-[11px] text-sand-300/60 bg-forest-900/40 p-3 rounded-xl border border-forest-800 flex justify-between items-center">
+                        <span>Sample Active Ticket:</span>
+                        <button onclick="document.getElementById('hero-track-input').value='TS-782194'; heroTrackLookup();" class="font-mono text-terra-400 font-bold hover:underline transition-all hover:scale-105">TS-782194</button>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</section>
+
+<!-- Core Business Pillar Cards (4 Pillars) -->
+<section class="py-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="text-center max-w-3xl mx-auto mb-16 space-y-3 reveal-on-scroll">
+        <span class="text-xs font-extrabold uppercase tracking-widest text-terra-500">What We Do</span>
+        <h2 class="font-display font-extrabold text-3xl sm:text-4xl text-forest-900">Four Core Technology Pillars</h2>
+        <p class="text-stone-600 text-sm sm:text-base">We craft robust web applications, engineer security surveillance, supply enterprise networking equipment, and provide component-level computer repairs.</p>
+    </div>
+
+    <!-- 4 Pillar Overview Cards Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {% for pillar in pillars %}
+        <div class="glass-card rounded-3xl p-6 border border-sand-300 flex flex-col justify-between group interactive-card reveal-up">
+            <div class="space-y-4">
+                <div class="w-12 h-12 rounded-2xl bg-terra-100 text-terra-600 flex items-center justify-center group-hover:bg-terra-500 group-hover:text-white group-hover:scale-110 group-hover:rotate-3 transition-all duration-300 shadow-sm">
+                    <i data-lucide="{{ pillar.icon_name }}" class="w-6 h-6"></i>
+                </div>
+                <h3 class="font-display font-bold text-lg text-forest-900">{{ pillar.title }}</h3>
+                <p class="text-xs text-stone-600 leading-relaxed">
+                    {{ pillar.description }}
+                </p>
+                <ul class="space-y-2 text-[11px] font-medium text-stone-700 pt-2">
+                    {% for feature in pillar.get_features %}
+                    <li class="flex items-center gap-1.5"><i data-lucide="check-circle-2" class="w-3.5 h-3.5 text-terra-500"></i> {{ feature }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+            <div class="pt-4 mt-4 border-t border-sand-300/60">
+                <a href="{{ pillar.button_link }}" class="w-full btn btn-sm bg-terra-500 hover:bg-terra-600 text-white font-semibold border-none hover:scale-[1.02] transition-transform">
+                    {{ pillar.button_text }}
+                </a>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</section>
+
+<!-- Featured Portfolio Projects Strip -->
+{% if featured_projects %}
+<section class="py-20 bg-sand-200/50 border-y border-sand-300">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-12">
+            <div class="space-y-2">
+                <span class="text-xs font-extrabold uppercase tracking-widest text-terra-500">Our Work</span>
+                <h2 class="font-display font-extrabold text-3xl sm:text-4xl text-forest-900">Featured Projects</h2>
+                <p class="text-stone-600 text-sm">Showcasing recent web apps, CCTV deployments, and network installations.</p>
+            </div>
+            <a href="{% url 'services:portfolio' %}" class="btn bg-forest-800 hover:bg-forest-900 text-white font-semibold border-none hover:scale-105 transition-transform">
+                <i data-lucide="grid-3x3" class="w-4 h-4"></i>
+                View All Projects
+            </a>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {% for project in featured_projects %}
+            <a href="{% url 'services:portfolio_detail' project.slug %}" class="group">
+                <div class="glass-card rounded-3xl overflow-hidden border border-sand-300 hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
+                    <!-- Cover Image -->
+                    <div class="relative h-52 bg-sand-200 overflow-hidden">
+                        {% if project.cover_image %}
+                        <img src="{{ project.cover_image.url }}" alt="{{ project.title }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                        {% else %}
+                        <div class="w-full h-full flex items-center justify-center bg-gradient-to-br from-forest-800 to-forest-900">
+                            <i data-lucide="image" class="w-12 h-12 text-forest-500"></i>
+                        </div>
+                        {% endif %}
+                        {% if project.category %}
+                        <span class="absolute top-3 left-3 px-2.5 py-1 rounded-lg text-[11px] font-bold bg-white/90 text-forest-900 backdrop-blur-sm">
+                            {{ project.category.name }}
+                        </span>
+                        {% endif %}
+                    </div>
+                    <!-- Card Body -->
+                    <div class="p-5 space-y-3">
+                        <h3 class="font-display font-bold text-lg text-forest-900 group-hover:text-terra-500 transition-colors">{{ project.title }}</h3>
+                        {% if project.client_name %}
+                        <p class="text-[11px] text-stone-500 font-medium">Client: {{ project.client_name }}</p>
+                        {% endif %}
+                        <p class="text-xs text-stone-600 leading-relaxed line-clamp-2">{{ project.description }}</p>
+                        
+                        {% if project.technologies.all %}
+                        <div class="flex flex-wrap gap-1.5 pt-1">
+                            {% for tech in project.technologies.all|slice:":4" %}
+                            <span class="px-2 py-0.5 rounded-md text-[10px] font-bold bg-sand-200 text-forest-800">{{ tech.name }}</span>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+
+                        <div class="flex items-center justify-between pt-3 border-t border-sand-200">
+                            {% if project.project_duration %}
+                            <span class="text-[11px] text-stone-500 flex items-center gap-1">
+                                <i data-lucide="clock" class="w-3 h-3"></i>
+                                {{ project.project_duration }}
+                            </span>
+                            {% endif %}
+                            <span class="text-xs font-bold text-terra-500 group-hover:translate-x-1 transition-transform">View Project →</span>
+                        </div>
+                    </div>
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+{% endif %}
+
+<!-- Testimonials Section -->
+<section class="py-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="text-center max-w-3xl mx-auto mb-16 space-y-3 reveal-on-scroll">
+        <span class="text-xs font-extrabold uppercase tracking-widest text-terra-500">Client Reviews</span>
+        <h2 class="font-display font-extrabold text-3xl sm:text-4xl text-forest-900">What Our Clients Say</h2>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+        {% for t in testimonials %}
+        <div class="glass-card rounded-3xl p-6 border border-sand-300 space-y-4 flex flex-col justify-between interactive-card reveal-on-scroll">
+            <div class="space-y-3">
+                <div class="flex text-amber-500 gap-1">
+                    {% for i in "12345" %}
+                    <i data-lucide="star" class="w-4 h-4 {% if forloop.counter <= t.rating %}fill-current{% endif %}"></i>
+                    {% endfor %}
+                </div>
+                <p class="text-xs text-stone-600 italic leading-relaxed">"{{ t.comment }}"</p>
+            </div>
+            <div class="pt-3 border-t border-sand-200 flex items-center justify-between">
+                <div>
+                    <span class="font-display font-bold text-sm text-forest-900 block">{{ t.client_name }}</span>
+                    <span class="text-[11px] text-stone-500 block">{{ t.client_role }}</span>
+                </div>
+                <span class="text-[10px] font-semibold px-2 py-0.5 rounded bg-sand-200 text-forest-800">{{ t.service_used }}</span>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</section>
+
+<!-- CTA Banner -->
+<section class="py-20 bg-terra-gradient text-white border-t border-forest-800">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-6">
+        <h2 class="font-display font-extrabold text-3xl sm:text-4xl">Ready to Start Your Project?</h2>
+        <p class="text-sand-200/80 text-sm sm:text-base max-w-2xl mx-auto">
+            Whether it's a web application, CCTV security system, network infrastructure, or laptop repair — TechStyle Solutions delivers premium results on time.
+        </p>
+        <div class="flex flex-wrap justify-center gap-4 pt-2">
+            <button onclick="openBookingModal('General Tech Consultation')" class="btn bg-terra-500 hover:bg-terra-600 text-white font-bold px-8 shadow-terra-glow hover:scale-105 transition-all border-none">
+                <i data-lucide="calendar-check" class="w-4 h-4"></i>
+                Request Free Quote
+            </button>
+            <a href="{% url 'services:contact' %}" class="btn bg-forest-800 hover:bg-forest-900 border border-sand-300/30 text-sand-100 font-bold px-8 hover:scale-105 transition-all">
+                <i data-lucide="mail" class="w-4 h-4 text-terra-400"></i>
+                Contact Us
+            </a>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    async function heroTrackLookup() {
+        const ref = document.getElementById('hero-track-input').value.trim();
+        const resDiv = document.getElementById('hero-track-result');
+        if (!ref) return;
+
+        resDiv.classList.remove('hidden');
+        resDiv.innerHTML = 'Searching ticket...';
+
+        try {
+            const res = await fetch(`{% url 'services:api_track_repair' %}?ref=${encodeURIComponent(ref)}`);
+            const data = await res.json();
+            if (!data.found) {
+                resDiv.innerHTML = `<span class="text-red-400">${data.message}</span>`;
+                return;
+            }
+            resDiv.innerHTML = `
+                <div class="space-y-1 animate-fadeIn">
+                    <div class="flex justify-between items-center">
+                        <span class="font-mono font-bold text-sand-100">${data.booking_ref}</span>
+                        <span class="px-2 py-0.5 rounded bg-terra-500 text-white text-[10px] font-bold">${data.status_display}</span>
+                    </div>
+                    <p class="text-sand-300">Notes: ${data.status_notes}</p>
+                </div>
+            `;
+        } catch(e) {
+            resDiv.innerHTML = '<span class="text-red-400">Error retrieving ticket.</span>';
+        }
+    }
+
+    // Number Roll-Up Counter Animation for Hero Metrics
+    function animateCounters() {
+        const counters = document.querySelectorAll('.counter-val');
+        counters.forEach(counter => {
+            const target = +counter.getAttribute('data-target');
+            const count = +counter.innerText;
+            const increment = target / 50;
+
+            if (count < target) {
+                counter.innerText = Math.ceil(count + increment);
+                setTimeout(animateCounters, 25);
+            } else {
+                counter.innerText = target.toLocaleString();
+            }
+        });
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        setTimeout(animateCounters, 300);
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,5 @@
+Django>=5.0.0,<6.0.0
+django-jazzmin>=3.0.0
+django-tailwind>=4.5.0
+pytailwindcss>=0.3.1
+Pillow>=10.0.0

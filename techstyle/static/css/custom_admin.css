@@ -1,0 +1,25 @@
+/* Custom CSS for Jazzmin Admin to fix sticky footer spacing and Save button alignment */
+.card-footer, .actions, div.actions {
+    padding: 12px 20px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 15px !important;
+    background-color: rgba(35, 39, 42, 0.95) !important;
+    border-top: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+
+.actions button[type="submit"], 
+.actions input[type="submit"],
+button[name="_save"],
+input[name="_save"] {
+    margin-left: 15px !important;
+    padding: 6px 18px !important;
+    font-weight: 700 !important;
+    border-radius: 6px !important;
+    display: inline-block !important;
+}
+
+.table-responsive {
+    margin-bottom: 20px !important;
+}

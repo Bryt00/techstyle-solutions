@@ -1,0 +1,488 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ project.title }} | Portfolio | TechStyle Solutions{% endblock %}
+
+{% block extra_head %}
+<style>
+    /* Before/After Comparison Slider */
+    .ba-slider {
+        position: relative;
+        overflow: hidden;
+        border-radius: 1rem;
+        user-select: none;
+        -webkit-user-select: none;
+    }
+    .ba-slider img {
+        display: block;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+    .ba-after {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 50%;
+        height: 100%;
+        overflow: hidden;
+    }
+    .ba-after img {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 200%;
+        max-width: none;
+    }
+    .ba-handle {
+        position: absolute;
+        top: 0;
+        left: 50%;
+        width: 4px;
+        height: 100%;
+        background: #C85A32;
+        cursor: ew-resize;
+        z-index: 10;
+        transform: translateX(-50%);
+    }
+    .ba-handle::before {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 40px;
+        height: 40px;
+        background: #C85A32;
+        border: 3px solid white;
+        border-radius: 50%;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+    }
+    .ba-handle::after {
+        content: '⟨  ⟩';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        color: white;
+        font-size: 14px;
+        font-weight: bold;
+        z-index: 1;
+        pointer-events: none;
+        letter-spacing: 4px;
+    }
+    .ba-label {
+        position: absolute;
+        bottom: 12px;
+        padding: 4px 12px;
+        border-radius: 999px;
+        font-size: 11px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        z-index: 5;
+        pointer-events: none;
+    }
+    .ba-label-before {
+        right: 12px;
+        background: rgba(31, 39, 35, 0.8);
+        color: #F9F4EB;
+    }
+    .ba-label-after {
+        left: 12px;
+        background: rgba(200, 90, 50, 0.9);
+        color: white;
+    }
+
+    /* Lightbox */
+    .lightbox-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(0,0,0,0.9);
+        z-index: 999;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        cursor: zoom-out;
+    }
+    .lightbox-overlay.active {
+        display: flex;
+    }
+    .lightbox-overlay img {
+        max-width: 90vw;
+        max-height: 85vh;
+        object-fit: contain;
+        border-radius: 12px;
+        box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+    }
+    .lightbox-caption {
+        position: absolute;
+        bottom: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        color: white;
+        font-size: 13px;
+        font-weight: 600;
+        background: rgba(0,0,0,0.6);
+        padding: 6px 16px;
+        border-radius: 999px;
+    }
+    .lightbox-close {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        color: white;
+        font-size: 32px;
+        cursor: pointer;
+        z-index: 1000;
+        background: rgba(0,0,0,0.5);
+        width: 44px;
+        height: 44px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: background 0.2s;
+    }
+    .lightbox-close:hover {
+        background: rgba(200, 90, 50, 0.8);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Page Header with Cover Image -->
+<section class="relative">
+    <div class="h-72 sm:h-96 bg-forest-900 overflow-hidden">
+        {% if project.cover_image %}
+        <img src="{{ project.cover_image.url }}" alt="{{ project.title }}" class="w-full h-full object-cover opacity-60" />
+        {% endif %}
+        <div class="absolute inset-0 bg-gradient-to-t from-forest-900 via-forest-900/60 to-transparent"></div>
+    </div>
+    <div class="absolute bottom-0 left-0 right-0">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-8">
+            <nav class="flex items-center gap-2 text-xs text-sand-300/70 font-medium mb-4">
+                <a href="{% url 'services:home' %}" class="hover:text-terra-400 transition-colors">Home</a>
+                <i data-lucide="chevron-right" class="w-3 h-3"></i>
+                <a href="{% url 'services:portfolio' %}" class="hover:text-terra-400 transition-colors">Portfolio</a>
+                <i data-lucide="chevron-right" class="w-3 h-3"></i>
+                <span class="text-terra-400">{{ project.title }}</span>
+            </nav>
+            
+            <div class="flex flex-wrap items-end justify-between gap-4">
+                <div class="space-y-2">
+                    {% if project.category %}
+                    <span class="px-3 py-1 rounded-lg text-[11px] font-bold bg-terra-500/20 text-terra-400 border border-terra-500/30">
+                        {{ project.category.name }}
+                    </span>
+                    {% endif %}
+                    <h1 class="font-display font-extrabold text-3xl sm:text-4xl lg:text-5xl text-white tracking-tight">{{ project.title }}</h1>
+                    {% if project.client_name %}
+                    <p class="text-sand-300/80 text-sm flex items-center gap-2">
+                        <i data-lucide="user" class="w-4 h-4 text-terra-400"></i>
+                        Client: <span class="font-semibold text-white">{{ project.client_name }}</span>
+                    </p>
+                    {% endif %}
+                </div>
+                <div class="flex gap-3 text-sm">
+                    {% if project.project_duration %}
+                    <div class="px-4 py-2 rounded-xl bg-white/10 backdrop-blur-sm border border-white/10 text-sand-200">
+                        <span class="text-[10px] uppercase font-semibold text-sand-300/60 block">Duration</span>
+                        <span class="font-bold">{{ project.project_duration }}</span>
+                    </div>
+                    {% endif %}
+                    {% if project.completion_date %}
+                    <div class="px-4 py-2 rounded-xl bg-white/10 backdrop-blur-sm border border-white/10 text-sand-200">
+                        <span class="text-[10px] uppercase font-semibold text-sand-300/60 block">Completed</span>
+                        <span class="font-bold">{{ project.completion_date|date:"M Y" }}</span>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Project Content -->
+<section class="py-16 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-12">
+        
+        <!-- Main Content Column -->
+        <div class="lg:col-span-2 space-y-10">
+            <!-- Description -->
+            <div class="space-y-3">
+                <h2 class="font-display font-bold text-2xl text-forest-900">Project Overview</h2>
+                <p class="text-stone-600 text-sm leading-relaxed">{{ project.description }}</p>
+            </div>
+
+            <!-- Challenge → Solution → Results Story -->
+            {% if project.challenge or project.solution or project.results %}
+            <div class="space-y-6">
+                <h2 class="font-display font-bold text-2xl text-forest-900">The Story</h2>
+                
+                <div class="space-y-4">
+                    {% if project.challenge %}
+                    <div class="flex gap-4 p-5 rounded-2xl bg-red-50/60 border border-red-200/60">
+                        <div class="w-10 h-10 rounded-xl bg-red-100 text-red-600 flex items-center justify-center shrink-0">
+                            <i data-lucide="alert-triangle" class="w-5 h-5"></i>
+                        </div>
+                        <div>
+                            <h3 class="font-display font-bold text-sm text-red-800 mb-1">The Challenge</h3>
+                            <p class="text-xs text-red-900/70 leading-relaxed">{{ project.challenge }}</p>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    {% if project.solution %}
+                    <div class="flex gap-4 p-5 rounded-2xl bg-blue-50/60 border border-blue-200/60">
+                        <div class="w-10 h-10 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center shrink-0">
+                            <i data-lucide="lightbulb" class="w-5 h-5"></i>
+                        </div>
+                        <div>
+                            <h3 class="font-display font-bold text-sm text-blue-800 mb-1">Our Solution</h3>
+                            <p class="text-xs text-blue-900/70 leading-relaxed">{{ project.solution }}</p>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    {% if project.results %}
+                    <div class="flex gap-4 p-5 rounded-2xl bg-emerald-50/60 border border-emerald-200/60">
+                        <div class="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-600 flex items-center justify-center shrink-0">
+                            <i data-lucide="trophy" class="w-5 h-5"></i>
+                        </div>
+                        <div>
+                            <h3 class="font-display font-bold text-sm text-emerald-800 mb-1">The Results</h3>
+                            <p class="text-xs text-emerald-900/70 leading-relaxed">{{ project.results }}</p>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Before/After Comparison -->
+            {% if before_images and after_images %}
+            <div class="space-y-4">
+                <h2 class="font-display font-bold text-2xl text-forest-900">Before & After</h2>
+                {% for before in before_images %}
+                {% with after=after_images|first %}
+                {% if after %}
+                <div class="ba-slider h-80 sm:h-[400px] border border-sand-300 shadow-lg" data-ba-slider>
+                    <!-- Before (background) -->
+                    <img src="{{ before.image.url }}" alt="Before: {{ before.caption }}" />
+                    <!-- After (overlay) -->
+                    <div class="ba-after">
+                        <img src="{{ after.image.url }}" alt="After: {{ after.caption }}" />
+                    </div>
+                    <div class="ba-handle"></div>
+                    <span class="ba-label ba-label-before">Before</span>
+                    <span class="ba-label ba-label-after">After</span>
+                </div>
+                {% endif %}
+                {% endwith %}
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <!-- Image Gallery -->
+            {% if gallery_images %}
+            <div class="space-y-4">
+                <h2 class="font-display font-bold text-2xl text-forest-900">Project Gallery</h2>
+                <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
+                    {% for img in gallery_images %}
+                    <div onclick="openLightbox('{{ img.image.url }}', '{{ img.caption|escapejs }}')" class="relative h-40 sm:h-48 rounded-xl overflow-hidden cursor-zoom-in group border border-sand-200 hover:border-terra-500 transition-colors">
+                        <img src="{{ img.image.url }}" alt="{{ img.caption }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" loading="lazy" />
+                        <div class="absolute inset-0 bg-forest-900/0 group-hover:bg-forest-900/30 transition-colors flex items-center justify-center">
+                            <i data-lucide="zoom-in" class="w-6 h-6 text-white opacity-0 group-hover:opacity-100 transition-opacity"></i>
+                        </div>
+                        {% if img.caption %}
+                        <span class="absolute bottom-2 left-2 right-2 text-[10px] font-semibold bg-black/50 text-white px-2 py-1 rounded-md truncate">{{ img.caption }}</span>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Sidebar -->
+        <div class="space-y-6">
+            <!-- Tech Stack -->
+            {% if project.technologies.all %}
+            <div class="glass-card rounded-2xl p-6 border border-sand-300 space-y-4">
+                <h3 class="font-display font-bold text-base text-forest-900 flex items-center gap-2">
+                    <i data-lucide="cpu" class="w-4 h-4 text-terra-500"></i>
+                    Technology Stack
+                </h3>
+                <div class="flex flex-wrap gap-2">
+                    {% for tech in project.technologies.all %}
+                    <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-sand-200 text-forest-900 border border-sand-300">
+                        {% if tech.icon_name %}
+                        <i data-lucide="{{ tech.icon_name }}" class="w-3.5 h-3.5 text-terra-500"></i>
+                        {% endif %}
+                        {{ tech.name }}
+                    </span>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Project Info Card -->
+            <div class="glass-card rounded-2xl p-6 border border-sand-300 space-y-4">
+                <h3 class="font-display font-bold text-base text-forest-900 flex items-center gap-2">
+                    <i data-lucide="info" class="w-4 h-4 text-terra-500"></i>
+                    Project Info
+                </h3>
+                <div class="space-y-3 text-sm">
+                    {% if project.category %}
+                    <div class="flex justify-between py-2 border-b border-sand-200">
+                        <span class="text-stone-500 text-xs font-semibold">Category</span>
+                        <span class="font-bold text-forest-900 text-xs">{{ project.category.name }}</span>
+                    </div>
+                    {% endif %}
+                    {% if project.client_name %}
+                    <div class="flex justify-between py-2 border-b border-sand-200">
+                        <span class="text-stone-500 text-xs font-semibold">Client</span>
+                        <span class="font-bold text-forest-900 text-xs">{{ project.client_name }}</span>
+                    </div>
+                    {% endif %}
+                    {% if project.project_duration %}
+                    <div class="flex justify-between py-2 border-b border-sand-200">
+                        <span class="text-stone-500 text-xs font-semibold">Duration</span>
+                        <span class="font-bold text-forest-900 text-xs">{{ project.project_duration }}</span>
+                    </div>
+                    {% endif %}
+                    {% if project.completion_date %}
+                    <div class="flex justify-between py-2 border-b border-sand-200">
+                        <span class="text-stone-500 text-xs font-semibold">Completed</span>
+                        <span class="font-bold text-forest-900 text-xs">{{ project.completion_date|date:"M d, Y" }}</span>
+                    </div>
+                    {% endif %}
+                    {% if gallery_images %}
+                    <div class="flex justify-between py-2">
+                        <span class="text-stone-500 text-xs font-semibold">Gallery Images</span>
+                        <span class="font-bold text-forest-900 text-xs">{{ gallery_images.count }}</span>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Book Similar CTA -->
+            <div class="bg-terra-gradient rounded-2xl p-6 text-white space-y-4">
+                <h3 class="font-display font-bold text-base">Need Something Similar?</h3>
+                <p class="text-xs text-sand-200/80 leading-relaxed">Request a quote for a similar project. Our team will reach out within 15 minutes.</p>
+                <button onclick="openBookingModal('{{ project.category.name|default:'Project'|escapejs }} - Similar to {{ project.title|escapejs }}')" class="btn bg-terra-500 hover:bg-terra-600 text-white w-full border-none font-bold shadow-terra-glow hover:scale-[1.02] transition-transform">
+                    <i data-lucide="calendar-check" class="w-4 h-4"></i>
+                    Request Quote
+                </button>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Related Projects -->
+{% if related_projects %}
+<section class="py-16 bg-sand-200/50 border-t border-sand-300">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between items-center mb-10">
+            <h2 class="font-display font-extrabold text-2xl text-forest-900">Related Projects</h2>
+            <a href="{% url 'services:portfolio' %}" class="text-xs font-bold text-terra-500 hover:underline flex items-center gap-1">
+                View All <i data-lucide="arrow-right" class="w-3 h-3"></i>
+            </a>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {% for rp in related_projects %}
+            <a href="{% url 'services:portfolio_detail' rp.slug %}" class="group">
+                <div class="glass-card rounded-2xl overflow-hidden border border-sand-300 hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
+                    <div class="h-40 bg-sand-200 overflow-hidden">
+                        {% if rp.cover_image %}
+                        <img src="{{ rp.cover_image.url }}" alt="{{ rp.title }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy" />
+                        {% else %}
+                        <div class="w-full h-full flex items-center justify-center bg-gradient-to-br from-forest-800 to-forest-900">
+                            <i data-lucide="image" class="w-10 h-10 text-forest-500"></i>
+                        </div>
+                        {% endif %}
+                    </div>
+                    <div class="p-4 space-y-1">
+                        <h3 class="font-display font-bold text-sm text-forest-900 group-hover:text-terra-500 transition-colors">{{ rp.title }}</h3>
+                        {% if rp.client_name %}
+                        <p class="text-[11px] text-stone-500">{{ rp.client_name }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+{% endif %}
+
+<!-- Lightbox Overlay -->
+<div id="lightbox-overlay" class="lightbox-overlay" onclick="closeLightbox()">
+    <button class="lightbox-close" onclick="closeLightbox()">✕</button>
+    <img id="lightbox-img" src="" alt="" />
+    <div id="lightbox-caption" class="lightbox-caption"></div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Lightbox
+    function openLightbox(src, caption) {
+        const overlay = document.getElementById('lightbox-overlay');
+        document.getElementById('lightbox-img').src = src;
+        const captionEl = document.getElementById('lightbox-caption');
+        captionEl.innerText = caption || '';
+        captionEl.style.display = caption ? 'block' : 'none';
+        overlay.classList.add('active');
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeLightbox() {
+        document.getElementById('lightbox-overlay').classList.remove('active');
+        document.body.style.overflow = '';
+    }
+
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') closeLightbox();
+    });
+
+    // Before/After Slider
+    document.querySelectorAll('[data-ba-slider]').forEach(slider => {
+        const handle = slider.querySelector('.ba-handle');
+        const afterDiv = slider.querySelector('.ba-after');
+        let isDragging = false;
+
+        function updatePosition(x) {
+            const rect = slider.getBoundingClientRect();
+            let percent = ((x - rect.left) / rect.width) * 100;
+            percent = Math.max(5, Math.min(95, percent));
+            handle.style.left = percent + '%';
+            afterDiv.style.width = percent + '%';
+        }
+
+        handle.addEventListener('mousedown', () => isDragging = true);
+        handle.addEventListener('touchstart', () => isDragging = true);
+
+        document.addEventListener('mousemove', (e) => {
+            if (isDragging) {
+                e.preventDefault();
+                updatePosition(e.clientX);
+            }
+        });
+
+        document.addEventListener('touchmove', (e) => {
+            if (isDragging) {
+                updatePosition(e.touches[0].clientX);
+            }
+        });
+
+        document.addEventListener('mouseup', () => isDragging = false);
+        document.addEventListener('touchend', () => isDragging = false);
+
+        // Click to position
+        slider.addEventListener('click', (e) => {
+            updatePosition(e.clientX);
+        });
+    });
+</script>
+{% endblock %}
