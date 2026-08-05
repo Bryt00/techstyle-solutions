@@ -1,8 +1,0 @@
-{
-    "python.analysis.extraPaths": [
-        "./perfect_prescott"
-    ],
-    "python.autoComplete.extraPaths": [
-        "./perfect_prescott"
-    ]
-}
