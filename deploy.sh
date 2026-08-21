@@ -1,6 +1,6 @@
 #!/bin/bash
-# Kelstech Systems Deployment Script
-# Supports: Ubuntu/Debian, Nginx, Gunicorn, PostgreSQL/SQLite, Cloudflare Strict SSL
+# TechStyle Solutions Deployment Script
+# Supports: Ubuntu/Debian, Nginx, Gunicorn, PostgreSQL, Cloudflare Strict SSL
 
 set -e
 
@@ -65,11 +65,6 @@ sudo mkdir -p $PROJECT_DIR/media
 sudo chown -R $USER:www-data $PROJECT_DIR/media
 sudo chmod -R 775 $PROJECT_DIR/media
 
-# -- db.sqlite3: readable/writable by app user only (NOT by www-data or others)
-if [ -f "$PROJECT_DIR/db.sqlite3" ]; then
-    sudo chown $USER:$USER $PROJECT_DIR/db.sqlite3
-    sudo chmod 640 $PROJECT_DIR/db.sqlite3
-fi
 # Also ensure the project directory itself is traversable by Gunicorn
 sudo chown $USER:www-data $PROJECT_DIR
 sudo chmod 750 $PROJECT_DIR
@@ -85,6 +80,7 @@ After=network.target
 User=$USER
 Group=www-data
 WorkingDirectory=$PROJECT_DIR
+EnvironmentFile=$PROJECT_DIR/.env
 Environment=\"PATH=$PROJECT_DIR/venv/bin\"
 ExecStart=$PROJECT_DIR/venv/bin/gunicorn --access-logfile - --workers $GUNICORN_WORKERS --bind unix:$PROJECT_DIR/$PROJECT_NAME.sock $PROJECT_NAME.wsgi:application
 
@@ -227,8 +223,8 @@ sudo ufw allow OpenSSH
 echo "========================================================="
 echo "Deployment setup complete!"
 echo "Next Steps:"
-echo "1. Upload your Cloudflare Origin Certificate to /etc/nginx/ssl/$DOMAIN.pem"
-echo "2. Upload your Cloudflare Private Key to /etc/nginx/ssl/$DOMAIN.key"
-echo "3. Restart Nginx: sudo systemctl restart nginx"
-echo "4. Update your ALLOWED_HOSTS and set DEBUG=False in settings.py"
+echo "1. Create your .env file at $PROJECT_DIR/.env with DB credentials"
+echo "2. Ensure PostgreSQL is running and the database/user exist"
+echo "3. Run: source venv/bin/activate && python manage.py migrate"
+echo "4. Set DEBUG=False in your .env file for production"
 echo "========================================================="
