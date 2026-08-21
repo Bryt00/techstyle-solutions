@@ -217,15 +217,15 @@
     <!-- Top Status Banner -->
     <div class="bg-forest-900 text-sand-200 text-xs py-2 px-4 border-b border-forest-800/80">
         <div class="max-w-7xl mx-auto flex flex-wrap justify-between items-center gap-2">
-            <div class="flex items-center gap-3">
-                <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 text-[11px] font-semibold border border-emerald-500/30">
+            <div class="flex items-center gap-3 min-w-0">
+                <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 text-[11px] font-semibold border border-emerald-500/30 shrink-0">
                     <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-                    {{ business_info.announcement_banner }}
+                    <span class="truncate max-w-[150px] sm:max-w-none">{{ business_info.announcement_banner }}</span>
                 </span>
-                <span class="hidden sm:inline text-sand-300/60">|</span>
-                <span class="hidden sm:inline">📍 {{ business_info.address }}</span>
+                <span class="hidden md:inline text-sand-300/60">|</span>
+                <span class="hidden md:inline truncate">📍 {{ business_info.address }}</span>
             </div>
-            <div class="flex items-center gap-4">
+            <div class="hidden sm:flex items-center gap-4">
                 <a href="tel:{{ business_info.phone_primary }}" class="hover:text-terra-400 transition-colors flex items-center gap-1 font-medium">
                     <i data-lucide="phone" class="w-3.5 h-3.5 text-terra-500"></i>
                     <span>{{ business_info.phone_primary }}</span>
@@ -251,7 +251,7 @@
                         <i data-lucide="cpu" class="w-6 h-6"></i>
                     {% endif %}
                 </div>
-                <div>
+                <div class="hidden sm:block">
                     <span class="font-display font-extrabold text-xl text-forest-900 tracking-tight block leading-none">
                         TECHSTYLE <span class="text-terra-500">SOLUTIONS</span>
                     </span>
@@ -276,9 +276,9 @@
                     <span>Track Ticket</span>
                 </button>
                 
-                <button onclick="openBookingModal('General Inquiry')" class="btn bg-terra-500 hover:bg-terra-600 border-none text-white font-semibold text-sm shadow-terra-glow transition-all hover:scale-[1.02] active:scale-95 px-5">
+                <button onclick="openBookingModal('General Inquiry')" class="btn bg-terra-500 hover:bg-terra-600 border-none text-white font-semibold text-sm shadow-terra-glow transition-all hover:scale-[1.02] active:scale-95 px-3 sm:px-5">
                     <i data-lucide="calendar" class="w-4 h-4"></i>
-                    <span>Request Quote</span>
+                    <span class="hidden sm:inline">Request Quote</span>
                 </button>
 
                 <!-- Mobile Menu Button -->
@@ -395,11 +395,8 @@
 
             </div>
 
-            <div class="mt-12 pt-6 border-t border-forest-800 text-center text-xs text-sand-300/60 flex flex-col sm:flex-row justify-between items-center gap-3">
+            <div class="mt-12 pt-6 border-t border-forest-800 text-center text-xs text-sand-300/60">
                 <p>© 2026 {{ business_info.business_name }}. All rights reserved.</p>
-                <p class="flex items-center gap-1">
-                    Powered by <span class="text-terra-400 font-semibold">Django</span> & <span class="text-sand-200">Tailwind CSS (Terra Theme)</span>
-                </p>
             </div>
         </div>
     </footer>
