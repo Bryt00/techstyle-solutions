@@ -427,7 +427,7 @@ class Command(BaseCommand):
                 title=p_data["title"],
                 defaults=p_data
             )
-            if techs:
+            if techs and isinstance(techs, list):
                 proj.technologies.set(techs)
 
         # 9. Site Metrics
