@@ -65,10 +65,14 @@
     </script>
 
     <style>
+        html {
+            overflow-x: hidden;
+        }
         body {
             font-family: 'Plus Jakarta Sans', sans-serif;
             background-color: #FBF8F5;
             color: #1F2421;
+            overflow-x: hidden;
         }
         .bg-terra-gradient {
             background: linear-gradient(135deg, #1F2723 0%, #2D3732 60%, #602617 100%);
@@ -243,12 +247,12 @@
     <header id="main-header" class="sticky top-0 z-40 bg-sand-100/90 backdrop-blur-md border-b border-sand-300/60 transition-all duration-300 h-20">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-full flex items-center justify-between">
             <!-- Brand Logo -->
-            <a href="{% url 'services:home' %}" class="flex items-center gap-3 group">
-                <div class="w-11 h-11 rounded-xl bg-terra-500 flex items-center justify-center text-white shadow-terra-glow group-hover:scale-105 transition-transform duration-300 overflow-hidden">
+            <a href="{% url 'services:home' %}" class="flex items-center gap-3.5 group">
+                <div class="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-white p-1 flex items-center justify-center shadow-md border border-sand-300/80 group-hover:scale-105 transition-transform duration-300 overflow-hidden shrink-0">
                     {% if business_info.site_logo %}
-                        <img src="{{ business_info.site_logo.url }}" alt="Logo" class="w-full h-full object-cover" />
+                        <img src="{{ business_info.site_logo.url }}" alt="Logo" class="w-full h-full object-contain" />
                     {% else %}
-                        <i data-lucide="cpu" class="w-6 h-6"></i>
+                        <i data-lucide="cpu" class="w-8 h-8 text-terra-500"></i>
                     {% endif %}
                 </div>
                 <div class="hidden sm:block">
@@ -265,6 +269,7 @@
                 <a href="{% url 'services:cctv' %}" class="nav-link hover:text-terra-500 transition-colors {% if request.path == '/cctv/' %}nav-active{% endif %}">CCTV</a>
                 <a href="{% url 'services:networking' %}" class="nav-link hover:text-terra-500 transition-colors {% if request.path == '/networking/' %}nav-active{% endif %}">Networking</a>
                 <a href="{% url 'services:repairs' %}" class="nav-link hover:text-terra-500 transition-colors {% if request.path == '/repairs/' %}nav-active{% endif %}">Repairs</a>
+                <a href="{% url 'services:shop' %}" class="nav-link hover:text-terra-500 transition-colors {% if request.path == '/shop/' %}nav-active{% endif %}">Shop</a>
                 <a href="{% url 'services:portfolio' %}" class="nav-link hover:text-terra-500 transition-colors {% if '/portfolio' in request.path %}nav-active{% endif %}">Portfolio</a>
                 <a href="{% url 'services:contact' %}" class="nav-link hover:text-terra-500 transition-colors {% if request.path == '/contact/' %}nav-active{% endif %}">Contact</a>
             </nav>
@@ -295,6 +300,7 @@
             <a href="{% url 'services:cctv' %}" onclick="toggleMobileMenu()" class="block py-2 text-forest-900 font-medium hover:text-terra-500">CCTV & Security</a>
             <a href="{% url 'services:networking' %}" onclick="toggleMobileMenu()" class="block py-2 text-forest-900 font-medium hover:text-terra-500">Networking & Cabling</a>
             <a href="{% url 'services:repairs' %}" onclick="toggleMobileMenu()" class="block py-2 text-forest-900 font-medium hover:text-terra-500">Laptop Repair Estimator</a>
+            <a href="{% url 'services:shop' %}" onclick="toggleMobileMenu()" class="block py-2 text-forest-900 font-medium hover:text-terra-500">🛒 Shop</a>
             <a href="{% url 'services:portfolio' %}" onclick="toggleMobileMenu()" class="block py-2 text-forest-900 font-medium hover:text-terra-500">Our Portfolio</a>
             <a href="{% url 'services:contact' %}" onclick="toggleMobileMenu()" class="block py-2 text-forest-900 font-medium hover:text-terra-500">Contact & FAQs</a>
             <button onclick="toggleMobileMenu(); openTrackModal();" class="w-full btn btn-outline btn-terra text-terra-600 gap-2">
@@ -317,11 +323,11 @@
                 <!-- Col 1: About -->
                 <div class="space-y-4">
                     <div class="flex items-center gap-3">
-                        <div class="w-9 h-9 rounded-lg bg-terra-500 flex items-center justify-center text-white font-bold overflow-hidden">
+                        <div class="w-12 h-12 rounded-xl bg-white p-1 flex items-center justify-center shadow-md border border-forest-800 overflow-hidden shrink-0">
                             {% if business_info.site_logo %}
-                                <img src="{{ business_info.site_logo.url }}" alt="Logo" class="w-full h-full object-cover" />
+                                <img src="{{ business_info.site_logo.url }}" alt="Logo" class="w-full h-full object-contain" />
                             {% else %}
-                                <i data-lucide="cpu" class="w-5 h-5"></i>
+                                <i data-lucide="cpu" class="w-7 h-7 text-terra-500"></i>
                             {% endif %}
                         </div>
                         <span class="font-display font-bold text-lg text-white">TECHSTYLE <span class="text-terra-400">SOLUTIONS</span></span>

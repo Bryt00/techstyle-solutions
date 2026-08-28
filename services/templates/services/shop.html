@@ -1,0 +1,629 @@
+{% extends 'base.html' %}
+
+{% block title %}Shop — {{ business_info.business_name }}{% endblock %}
+
+{% block extra_head %}
+<style>
+    .product-card {
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    .product-card:hover {
+        transform: translateY(-6px);
+        box-shadow: 0 20px 40px -15px rgba(45, 55, 50, 0.15);
+    }
+    .product-card .product-image {
+        transition: transform 0.4s ease;
+    }
+    .product-card:hover .product-image {
+        transform: scale(1.05);
+    }
+    .badge-sale {
+        background: linear-gradient(135deg, #C85A32 0%, #E6A15C 100%);
+    }
+    .badge-new {
+        background: linear-gradient(135deg, #4A5D4E 0%, #2D3732 100%);
+    }
+    .discount-badge {
+        background: linear-gradient(135deg, #dc2626 0%, #ef4444 100%);
+    }
+    .cart-counter {
+        animation: cartPop 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    @keyframes cartPop {
+        0% { transform: scale(0.5); }
+        100% { transform: scale(1); }
+    }
+    .cart-sidebar {
+        transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .cart-sidebar.open {
+        transform: translateX(0);
+    }
+    .cart-overlay {
+        transition: opacity 0.3s ease;
+    }
+    .qty-btn {
+        transition: background 0.15s ease, transform 0.1s ease;
+    }
+    .qty-btn:active {
+        transform: scale(0.9);
+    }
+    .category-chip {
+        transition: all 0.2s ease;
+    }
+    .category-chip:hover {
+        transform: translateY(-1px);
+    }
+    .category-chip.active {
+        background: linear-gradient(135deg, #C85A32 0%, #E6A15C 100%);
+        color: white;
+        border-color: transparent;
+    }
+    .checkout-step { display: none; }
+    .checkout-step.active { display: block; }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- Page Header Banner -->
+<section class="page-header-banner py-14 sm:py-20 relative">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+        <div class="text-center">
+            <span class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-terra-500/20 text-terra-400 text-xs font-semibold border border-terra-500/30 mb-4">
+                <i data-lucide="shopping-bag" class="w-3.5 h-3.5"></i>
+                TechStyle Store
+            </span>
+            <h1 class="font-display text-3xl sm:text-4xl lg:text-5xl font-extrabold text-white leading-tight">
+                Shop <span class="text-gradient-terra">Tech Products</span>
+            </h1>
+            <p class="mt-3 text-sand-300/80 max-w-2xl mx-auto text-sm sm:text-base">
+                Browse our curated selection of laptops, accessories, networking gear, CCTV equipment, and more. All products come with TechStyle warranty and support.
+            </p>
+        </div>
+    </div>
+</section>
+
+<!-- Category Filters + Cart Toggle -->
+<section class="py-6 border-b border-sand-300/60 bg-white/50 backdrop-blur-sm sticky top-20 z-30">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <!-- Category Pills -->
+            <div class="flex flex-wrap gap-2">
+                <a href="{% url 'services:shop' %}"
+                   class="category-chip inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold border transition-all
+                   {% if not active_category %}active{% else %}border-sand-300 text-forest-800 hover:border-terra-400 bg-white{% endif %}">
+                    <i data-lucide="grid-3x3" class="w-3.5 h-3.5"></i>
+                    All Products
+                </a>
+                {% for cat in categories %}
+                <a href="{% url 'services:shop' %}?category={{ cat.slug }}"
+                   class="category-chip inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold border transition-all
+                   {% if active_category == cat.slug %}active{% else %}border-sand-300 text-forest-800 hover:border-terra-400 bg-white{% endif %}">
+                    <i data-lucide="{{ cat.icon_name }}" class="w-3.5 h-3.5"></i>
+                    {{ cat.name }}
+                </a>
+                {% endfor %}
+            </div>
+
+            <!-- Cart Button -->
+            <button onclick="toggleCart()" id="cart-toggle-btn" class="flex items-center gap-2 px-4 py-2 rounded-xl bg-forest-900 text-white font-semibold text-sm hover:bg-forest-800 transition-all hover:scale-[1.02] active:scale-95 shadow-soft-card">
+                <i data-lucide="shopping-cart" class="w-4 h-4"></i>
+                <span>Cart</span>
+                <span id="cart-count" class="w-5 h-5 rounded-full bg-terra-500 text-white text-[11px] font-bold flex items-center justify-center cart-counter hidden">0</span>
+            </button>
+        </div>
+    </div>
+</section>
+
+<!-- Product Grid -->
+<section class="py-10 sm:py-14">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        {% if products %}
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5 sm:gap-6">
+            {% for product in products %}
+            <div class="product-card glass-card rounded-2xl overflow-hidden flex flex-col" data-product-id="{{ product.id }}">
+                <!-- Product Image -->
+                <div class="relative overflow-hidden bg-sand-200/50 aspect-square">
+                    <img src="{{ product.image.url }}" alt="{{ product.name }}" class="product-image w-full h-full object-cover" loading="lazy">
+
+                    <!-- Badges -->
+                    <div class="absolute top-3 left-3 flex flex-col gap-1.5">
+                        {% if product.badge_text %}
+                        <span class="badge-sale px-2.5 py-0.5 rounded-full text-white text-[11px] font-bold shadow-lg">
+                            {{ product.badge_text }}
+                        </span>
+                        {% endif %}
+                        {% if product.discount_percent %}
+                        <span class="discount-badge px-2.5 py-0.5 rounded-full text-white text-[11px] font-bold shadow-lg">
+                            -{{ product.discount_percent }}%
+                        </span>
+                        {% endif %}
+                        {% if product.is_featured %}
+                        <span class="badge-new px-2.5 py-0.5 rounded-full text-white text-[11px] font-bold shadow-lg">
+                            ★ Featured
+                        </span>
+                        {% endif %}
+                    </div>
+
+                    {% if not product.in_stock %}
+                    <div class="absolute inset-0 bg-forest-900/60 flex items-center justify-center">
+                        <span class="px-4 py-1.5 rounded-full bg-white/90 text-forest-900 text-xs font-bold">Out of Stock</span>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- Product Info -->
+                <div class="p-4 flex-1 flex flex-col">
+                    <span class="text-[11px] font-semibold text-terra-500 uppercase tracking-wider">{{ product.category.name }}</span>
+                    <h3 class="font-display font-bold text-forest-900 text-sm mt-1 leading-snug line-clamp-2">{{ product.name }}</h3>
+                    <p class="text-xs text-stone-500 mt-1.5 line-clamp-2 flex-1">{{ product.description }}</p>
+
+                    <!-- Price -->
+                    <div class="flex items-baseline gap-2 mt-3">
+                        <span class="font-display font-extrabold text-lg text-forest-900">GHS {{ product.price }}</span>
+                        {% if product.old_price %}
+                        <span class="text-xs text-stone-400 line-through">GHS {{ product.old_price }}</span>
+                        {% endif %}
+                    </div>
+
+                    <!-- Add to Cart Button -->
+                    {% if product.in_stock %}
+                    <button onclick="addToCart('{{ product.id }}', '{{ product.name|escapejs }}', '{{ product.price }}', '{{ product.image.url }}', '{{ product.category.name|escapejs }}')"
+                            class="mt-3 w-full btn btn-sm bg-terra-500 hover:bg-terra-600 border-none text-white font-semibold shadow-terra-glow transition-all hover:scale-[1.02] active:scale-95 gap-1.5">
+                        <i data-lucide="shopping-cart" class="w-3.5 h-3.5"></i>
+                        Add to Cart
+                    </button>
+                    {% else %}
+                    <button disabled class="mt-3 w-full btn btn-sm btn-disabled text-stone-400 gap-1.5">
+                        <i data-lucide="x-circle" class="w-3.5 h-3.5"></i>
+                        Out of Stock
+                    </button>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="text-center py-20">
+            <div class="w-16 h-16 mx-auto rounded-2xl bg-sand-200 flex items-center justify-center mb-4">
+                <i data-lucide="package-x" class="w-8 h-8 text-stone-400"></i>
+            </div>
+            <h3 class="font-display font-bold text-lg text-forest-900">No Products Found</h3>
+            <p class="text-sm text-stone-500 mt-1">Check back soon — we're stocking up!</p>
+            {% if active_category %}
+            <a href="{% url 'services:shop' %}" class="btn btn-sm bg-terra-500 hover:bg-terra-600 border-none text-white mt-4 shadow-terra-glow">
+                View All Products
+            </a>
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+</section>
+
+<!-- Cart Sidebar Overlay -->
+<div id="cart-overlay" class="fixed inset-0 bg-forest-900/60 z-50 hidden cart-overlay opacity-0" onclick="toggleCart()"></div>
+
+<!-- Cart Sidebar -->
+<div id="cart-sidebar" class="fixed top-0 right-0 h-full w-full sm:w-[420px] bg-white z-50 shadow-2xl cart-sidebar translate-x-full flex flex-col">
+    <!-- Cart Header -->
+    <div class="flex items-center justify-between px-5 py-4 border-b border-sand-300">
+        <h2 class="font-display font-bold text-lg text-forest-900 flex items-center gap-2">
+            <i data-lucide="shopping-cart" class="w-5 h-5 text-terra-500"></i>
+            Your Cart
+        </h2>
+        <button onclick="toggleCart()" class="p-1.5 rounded-lg hover:bg-sand-200 transition-colors">
+            <i data-lucide="x" class="w-5 h-5 text-forest-900"></i>
+        </button>
+    </div>
+
+    <!-- Cart Items -->
+    <div id="cart-items-container" class="flex-1 overflow-y-auto px-5 py-4 space-y-3">
+        <!-- Dynamic cart items injected here -->
+    </div>
+
+    <!-- Cart Empty State -->
+    <div id="cart-empty" class="flex-1 flex flex-col items-center justify-center px-5 hidden">
+        <div class="w-14 h-14 rounded-2xl bg-sand-200 flex items-center justify-center mb-3">
+            <i data-lucide="shopping-bag" class="w-7 h-7 text-stone-400"></i>
+        </div>
+        <p class="font-display font-bold text-forest-900">Your cart is empty</p>
+        <p class="text-xs text-stone-500 mt-1">Browse our products and add items to your cart</p>
+    </div>
+
+    <!-- Cart Footer -->
+    <div id="cart-footer" class="border-t border-sand-300 px-5 py-4 space-y-3 bg-sand-100">
+        <div class="flex justify-between items-center">
+            <span class="text-sm font-semibold text-forest-900">Total</span>
+            <span id="cart-total" class="font-display font-extrabold text-xl text-forest-900">GHS 0.00</span>
+        </div>
+        <button onclick="showCheckout()" id="checkout-btn" class="w-full btn bg-terra-500 hover:bg-terra-600 border-none text-white font-bold shadow-terra-glow transition-all hover:scale-[1.01] active:scale-95 gap-2">
+            <i data-lucide="credit-card" class="w-4 h-4"></i>
+            Proceed to Checkout
+        </button>
+        <button onclick="clearCart()" class="w-full btn btn-ghost btn-sm text-stone-500 hover:text-red-500 gap-1.5">
+            <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+            Clear Cart
+        </button>
+    </div>
+</div>
+
+<!-- Checkout Modal -->
+<div id="checkout-modal" class="modal">
+    <div class="modal-box bg-white max-w-lg border border-sand-300">
+        <button onclick="closeCheckoutModal()" class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">✕</button>
+
+        <!-- Step 1: Customer Details -->
+        <div id="checkout-step-1" class="checkout-step active">
+            <h3 class="font-display font-bold text-xl text-forest-900 flex items-center gap-2">
+                <i data-lucide="user" class="w-6 h-6 text-terra-500"></i>
+                Checkout — Your Details
+            </h3>
+            <p class="text-xs text-stone-600 mt-1 mb-4">Fill in your details to complete your order.</p>
+
+            <form id="checkout-form" class="space-y-3">
+                {% csrf_token %}
+                <div class="form-control">
+                    <label class="label text-xs font-semibold text-forest-900">Full Name *</label>
+                    <input type="text" id="checkout-name" required placeholder="e.g. Kwame Asante" class="input input-bordered input-sm w-full border-stone-300 focus:border-terra-500" />
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div class="form-control">
+                        <label class="label text-xs font-semibold text-forest-900">Phone Number *</label>
+                        <input type="tel" id="checkout-phone" required placeholder="e.g. 024 123 4567" class="input input-bordered input-sm w-full border-stone-300 focus:border-terra-500" />
+                    </div>
+                    <div class="form-control">
+                        <label class="label text-xs font-semibold text-forest-900">Email Address *</label>
+                        <input type="email" id="checkout-email" required placeholder="kwame@example.com" class="input input-bordered input-sm w-full border-stone-300 focus:border-terra-500" />
+                    </div>
+                </div>
+                <div class="form-control">
+                    <label class="label text-xs font-semibold text-forest-900">Delivery Address *</label>
+                    <textarea id="checkout-address" required rows="2" placeholder="Full delivery address..." class="textarea textarea-bordered textarea-sm w-full border-stone-300 focus:border-terra-500"></textarea>
+                </div>
+                <div class="form-control">
+                    <label class="label text-xs font-semibold text-forest-900">Notes (Optional)</label>
+                    <input type="text" id="checkout-notes" placeholder="Any special instructions..." class="input input-bordered input-sm w-full border-stone-300 focus:border-terra-500" />
+                </div>
+
+                <!-- Order Summary -->
+                <div class="rounded-xl bg-sand-100 border border-sand-300 p-3 mt-3">
+                    <h4 class="text-xs font-bold text-forest-900 mb-2">Order Summary</h4>
+                    <div id="checkout-summary" class="space-y-1.5 text-xs text-stone-600">
+                        <!-- Dynamic items -->
+                    </div>
+                    <div class="flex justify-between items-center mt-3 pt-2 border-t border-sand-300">
+                        <span class="font-bold text-forest-900 text-sm">Total</span>
+                        <span id="checkout-total" class="font-display font-extrabold text-lg text-terra-500">GHS 0.00</span>
+                    </div>
+                </div>
+
+                <div class="pt-2">
+                    <button type="button" onclick="processCheckout()" id="pay-btn" class="btn bg-terra-500 hover:bg-terra-600 text-white w-full shadow-terra-glow font-bold gap-2">
+                        <i data-lucide="lock" class="w-4 h-4"></i>
+                        Pay with Paystack
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Step 2: Success -->
+        <div id="checkout-step-2" class="checkout-step">
+            <div class="text-center py-6">
+                <div class="w-16 h-16 mx-auto rounded-full bg-emerald-100 flex items-center justify-center mb-4">
+                    <i data-lucide="check-circle" class="w-8 h-8 text-emerald-500"></i>
+                </div>
+                <h3 class="font-display font-bold text-xl text-forest-900">Order Placed Successfully!</h3>
+                <p class="text-sm text-stone-600 mt-2">Your payment has been confirmed.</p>
+                <div class="mt-4 p-4 bg-sand-100 rounded-xl border border-sand-300">
+                    <p class="text-xs text-stone-500">Your Order Reference</p>
+                    <p id="success-order-ref" class="font-display font-extrabold text-2xl text-terra-500 mt-1">TS-XXXXXX</p>
+                </div>
+                <p class="text-xs text-stone-500 mt-4">Our team will process your order and contact you shortly via phone/WhatsApp to confirm delivery.</p>
+                <button onclick="closeCheckoutModal(); location.reload();" class="btn bg-terra-500 hover:bg-terra-600 text-white mt-4 shadow-terra-glow">
+                    Continue Shopping
+                </button>
+            </div>
+        </div>
+    </div>
+    <div class="modal-backdrop bg-forest-900/60" onclick="closeCheckoutModal()"></div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<!-- Paystack Inline JS -->
+<script src="https://js.paystack.co/v1/inline.js"></script>
+
+<script>
+    // ── Cart State (localStorage) ──────────────────────────────────────────────
+    const CART_KEY = 'techstyle_cart';
+    const PAYSTACK_KEY = '{{ paystack_public_key }}';
+
+    function getCart() {
+        try {
+            return JSON.parse(localStorage.getItem(CART_KEY)) || [];
+        } catch { return []; }
+    }
+
+    function saveCart(cart) {
+        localStorage.setItem(CART_KEY, JSON.stringify(cart));
+        updateCartUI();
+    }
+
+    function addToCart(productId, name, price, imageUrl, categoryName) {
+        const cart = getCart();
+        const existing = cart.find(item => item.product_id === productId);
+        if (existing) {
+            existing.quantity += 1;
+        } else {
+            cart.push({
+                product_id: productId,
+                name: name,
+                price: parseFloat(price),
+                image: imageUrl,
+                category: categoryName,
+                quantity: 1
+            });
+        }
+        saveCart(cart);
+
+        // Flash feedback
+        const btn = event.target.closest('button');
+        if (btn) {
+            const originalHTML = btn.innerHTML;
+            btn.innerHTML = '<i data-lucide="check" class="w-3.5 h-3.5"></i> Added!';
+            btn.classList.add('bg-emerald-500');
+            btn.classList.remove('bg-terra-500');
+            lucide.createIcons();
+            setTimeout(() => {
+                btn.innerHTML = originalHTML;
+                btn.classList.remove('bg-emerald-500');
+                btn.classList.add('bg-terra-500');
+                lucide.createIcons();
+            }, 800);
+        }
+    }
+
+    function removeFromCart(productId) {
+        let cart = getCart().filter(item => item.product_id !== productId);
+        saveCart(cart);
+    }
+
+    function updateQuantity(productId, delta) {
+        const cart = getCart();
+        const item = cart.find(i => i.product_id === productId);
+        if (item) {
+            item.quantity = Math.max(1, item.quantity + delta);
+        }
+        saveCart(cart);
+    }
+
+    function clearCart() {
+        localStorage.removeItem(CART_KEY);
+        updateCartUI();
+    }
+
+    function getCartTotal() {
+        return getCart().reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    }
+
+    function getCartCount() {
+        return getCart().reduce((sum, item) => sum + item.quantity, 0);
+    }
+
+    // ── Cart UI ────────────────────────────────────────────────────────────────
+
+    function updateCartUI() {
+        const cart = getCart();
+        const countEl = document.getElementById('cart-count');
+        const itemsContainer = document.getElementById('cart-items-container');
+        const emptyEl = document.getElementById('cart-empty');
+        const footerEl = document.getElementById('cart-footer');
+        const totalEl = document.getElementById('cart-total');
+        const count = getCartCount();
+
+        // Update counter badge
+        if (count > 0) {
+            countEl.textContent = count;
+            countEl.classList.remove('hidden');
+        } else {
+            countEl.classList.add('hidden');
+        }
+
+        // Update cart items
+        if (cart.length === 0) {
+            itemsContainer.classList.add('hidden');
+            emptyEl.classList.remove('hidden');
+            footerEl.classList.add('hidden');
+        } else {
+            itemsContainer.classList.remove('hidden');
+            emptyEl.classList.add('hidden');
+            footerEl.classList.remove('hidden');
+
+            itemsContainer.innerHTML = cart.map(item => `
+                <div class="flex gap-3 p-3 rounded-xl bg-sand-100 border border-sand-300/60">
+                    <img src="${item.image}" alt="${item.name}" class="w-16 h-16 rounded-lg object-cover shrink-0">
+                    <div class="flex-1 min-w-0">
+                        <p class="text-[11px] font-semibold text-terra-500 uppercase">${item.category}</p>
+                        <p class="font-semibold text-xs text-forest-900 truncate">${item.name}</p>
+                        <p class="font-display font-bold text-sm text-forest-900 mt-0.5">GHS ${item.price.toFixed(2)}</p>
+                        <div class="flex items-center gap-2 mt-1.5">
+                            <button onclick="updateQuantity(${item.product_id}, -1)" class="qty-btn w-6 h-6 rounded-md bg-sand-200 hover:bg-sand-300 flex items-center justify-center text-xs font-bold">−</button>
+                            <span class="text-xs font-bold text-forest-900 w-5 text-center">${item.quantity}</span>
+                            <button onclick="updateQuantity(${item.product_id}, 1)" class="qty-btn w-6 h-6 rounded-md bg-sand-200 hover:bg-sand-300 flex items-center justify-center text-xs font-bold">+</button>
+                            <button onclick="removeFromCart(${item.product_id})" class="ml-auto p-1 text-stone-400 hover:text-red-500 transition-colors">
+                                <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+            lucide.createIcons();
+        }
+
+        totalEl.textContent = `GHS ${getCartTotal().toFixed(2)}`;
+    }
+
+    // ── Cart Sidebar Toggle ────────────────────────────────────────────────────
+
+    function toggleCart() {
+        const sidebar = document.getElementById('cart-sidebar');
+        const overlay = document.getElementById('cart-overlay');
+        const isOpen = sidebar.classList.contains('open');
+
+        if (isOpen) {
+            sidebar.classList.remove('open');
+            overlay.classList.add('opacity-0');
+            setTimeout(() => overlay.classList.add('hidden'), 300);
+        } else {
+            updateCartUI();
+            overlay.classList.remove('hidden');
+            requestAnimationFrame(() => {
+                overlay.classList.remove('opacity-0');
+                sidebar.classList.add('open');
+            });
+        }
+    }
+
+    // ── Checkout Flow ──────────────────────────────────────────────────────────
+
+    function showCheckout() {
+        toggleCart();
+        const cart = getCart();
+        if (cart.length === 0) return;
+
+        // Populate summary
+        const summaryEl = document.getElementById('checkout-summary');
+        summaryEl.innerHTML = cart.map(item => `
+            <div class="flex justify-between">
+                <span class="truncate mr-2">${item.name} × ${item.quantity}</span>
+                <span class="font-semibold shrink-0">GHS ${(item.price * item.quantity).toFixed(2)}</span>
+            </div>
+        `).join('');
+        document.getElementById('checkout-total').textContent = `GHS ${getCartTotal().toFixed(2)}`;
+
+        // Show step 1
+        document.getElementById('checkout-step-1').classList.add('active');
+        document.getElementById('checkout-step-2').classList.remove('active');
+        document.getElementById('checkout-modal').classList.add('modal-open');
+    }
+
+    function closeCheckoutModal() {
+        document.getElementById('checkout-modal').classList.remove('modal-open');
+    }
+
+    async function processCheckout() {
+        const name = document.getElementById('checkout-name').value.trim();
+        const phone = document.getElementById('checkout-phone').value.trim();
+        const email = document.getElementById('checkout-email').value.trim();
+        const address = document.getElementById('checkout-address').value.trim();
+        const notes = document.getElementById('checkout-notes').value.trim();
+
+        if (!name || !phone || !email || !address) {
+            alert('Please fill in all required fields.');
+            return;
+        }
+
+        const cart = getCart();
+        if (cart.length === 0) {
+            alert('Your cart is empty.');
+            return;
+        }
+
+        const payBtn = document.getElementById('pay-btn');
+        payBtn.disabled = true;
+        payBtn.innerHTML = '<span>Creating order...</span>';
+
+        // Step 1: Create order on server
+        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+        try {
+            const orderRes = await fetch("{% url 'services:api_shop_order' %}", {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrfToken
+                },
+                body: JSON.stringify({
+                    customer_name: name,
+                    customer_phone: phone,
+                    customer_email: email,
+                    delivery_address: address,
+                    notes: notes,
+                    items: cart.map(i => ({ product_id: i.product_id, quantity: i.quantity }))
+                })
+            });
+            const orderData = await orderRes.json();
+
+            if (!orderData.success) {
+                alert(orderData.error || 'Failed to create order.');
+                payBtn.disabled = false;
+                payBtn.innerHTML = '<i data-lucide="lock" class="w-4 h-4"></i> Pay with Paystack';
+                lucide.createIcons();
+                return;
+            }
+
+            // Step 2: Open Paystack payment
+            payBtn.innerHTML = '<span>Opening payment...</span>';
+
+            const handler = PaystackPop.setup({
+                key: PAYSTACK_KEY,
+                email: email,
+                amount: Math.round(orderData.total_amount * 100), // Paystack uses kobo/pesewas
+                currency: 'GHS',
+                ref: orderData.order_ref + '-' + Date.now(),
+                metadata: {
+                    order_ref: orderData.order_ref,
+                    customer_name: name,
+                    customer_phone: phone,
+                },
+                callback: async function(response) {
+                    // Step 3: Verify payment on server
+                    payBtn.innerHTML = '<span>Verifying payment...</span>';
+                    try {
+                        const verifyRes = await fetch("{% url 'services:api_verify_payment' %}", {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                reference: response.reference,
+                                order_id: orderData.order_id
+                            })
+                        });
+                        const verifyData = await verifyRes.json();
+
+                        if (verifyData.success) {
+                            // Success!
+                            clearCart();
+                            document.getElementById('success-order-ref').textContent = verifyData.order_ref;
+                            document.getElementById('checkout-step-1').classList.remove('active');
+                            document.getElementById('checkout-step-2').classList.add('active');
+                        } else {
+                            alert('Payment verification failed. Please contact support with reference: ' + response.reference);
+                        }
+                    } catch (err) {
+                        alert('Error verifying payment. Please contact support.');
+                    }
+                    payBtn.disabled = false;
+                    payBtn.innerHTML = '<i data-lucide="lock" class="w-4 h-4"></i> Pay with Paystack';
+                    lucide.createIcons();
+                },
+                onClose: function() {
+                    payBtn.disabled = false;
+                    payBtn.innerHTML = '<i data-lucide="lock" class="w-4 h-4"></i> Pay with Paystack';
+                    lucide.createIcons();
+                }
+            });
+            handler.openIframe();
+
+        } catch (err) {
+            alert('Network error. Please try again.');
+            payBtn.disabled = false;
+            payBtn.innerHTML = '<i data-lucide="lock" class="w-4 h-4"></i> Pay with Paystack';
+            lucide.createIcons();
+        }
+    }
+
+    // Initialize cart UI on page load
+    document.addEventListener('DOMContentLoaded', updateCartUI);
+</script>
+{% endblock %}

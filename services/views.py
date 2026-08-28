@@ -1,12 +1,17 @@
 from django.shortcuts import render, get_object_or_404
 from django.http import JsonResponse
 from django.views.decorators.http import require_POST
+from django.views.decorators.csrf import csrf_exempt
 import json
+import os
+import requests as http_requests
+from decimal import Decimal
 
 from .models import (
     ServiceCategory, ServiceItem, LaptopBrand, LaptopRepairIssue,
     NetworkPackage, ServiceBooking, ContactMessage, Testimonial, FAQ,
-    PortfolioProject, SiteMetric, CorePillar
+    PortfolioProject, SiteMetric, CorePillar,
+    ShopCategory, ShopProduct, ShopOrder, OrderItem
 )
 
 
@@ -243,3 +248,136 @@ def contact_submit_api(request):
         'success': True,
         'message': 'Thank you! Your message has been received by TechStyle Solutions. We will get back to you shortly.'
     })
+
+
+# ── Shop Views ──────────────────────────────────────────────────────────────
+
+def shop_view(request):
+    """Shop page with product grid, category filters, and cart."""
+    category_slug = request.GET.get('category', '')
+    categories = ShopCategory.objects.all()
+    products = ShopProduct.objects.filter(in_stock=True).select_related('category')
+
+    if category_slug:
+        products = products.filter(category__slug=category_slug)
+
+    context = {
+        'categories': categories,
+        'products': products,
+        'active_category': category_slug,
+        'paystack_public_key': os.environ.get('PAYSTACK_PUBLIC_KEY', ''),
+    }
+    return render(request, 'services/shop.html', context)
+
+
+@require_POST
+def create_shop_order_api(request):
+    """Create an order from cart items. Returns order_ref + total for Paystack payment."""
+    try:
+        data = json.loads(request.body)
+    except json.JSONDecodeError:
+        return JsonResponse({'success': False, 'error': 'Invalid request data.'}, status=400)
+
+    customer_name = data.get('customer_name', '').strip()
+    customer_phone = data.get('customer_phone', '').strip()
+    customer_email = data.get('customer_email', '').strip()
+    delivery_address = data.get('delivery_address', '').strip()
+    notes = data.get('notes', '').strip()
+    cart_items = data.get('items', [])
+
+    if not customer_name or not customer_phone or not customer_email or not delivery_address:
+        return JsonResponse({
+            'success': False,
+            'error': 'Please provide your Name, Phone, Email, and Delivery Address.'
+        }, status=400)
+
+    if not cart_items:
+        return JsonResponse({
+            'success': False,
+            'error': 'Your cart is empty.'
+        }, status=400)
+
+    # Create the order
+    order = ShopOrder.objects.create(
+        customer_name=customer_name,
+        customer_phone=customer_phone,
+        customer_email=customer_email,
+        delivery_address=delivery_address,
+        notes=notes,
+        status='pending_payment',
+        status_notes='Order created. Awaiting payment confirmation.'
+    )
+
+    total = Decimal('0.00')
+    for item in cart_items:
+        product_id = item.get('product_id')
+        quantity = int(item.get('quantity', 1))
+        product = ShopProduct.objects.filter(id=product_id, in_stock=True).first()
+        if product:
+            OrderItem.objects.create(
+                order=order,
+                product=product,
+                product_name=product.name,
+                quantity=quantity,
+                unit_price=product.price
+            )
+            total += product.price * quantity
+
+    order.total_amount = total
+    order.save()
+
+    return JsonResponse({
+        'success': True,
+        'order_ref': order.order_ref,
+        'total_amount': float(total),
+        'customer_email': customer_email,
+        'order_id': order.id,
+    })
+
+
+@csrf_exempt
+@require_POST
+def verify_paystack_payment_api(request):
+    """Verify Paystack payment and update order status."""
+    try:
+        data = json.loads(request.body)
+    except json.JSONDecodeError:
+        return JsonResponse({'success': False, 'error': 'Invalid request.'}, status=400)
+
+    reference = data.get('reference', '').strip()
+    order_id = data.get('order_id')
+
+    if not reference or not order_id:
+        return JsonResponse({'success': False, 'error': 'Missing reference or order.'}, status=400)
+
+    # Verify with Paystack API
+    paystack_secret = os.environ.get('PAYSTACK_SECRET_KEY', '')
+    headers = {
+        'Authorization': f'Bearer {paystack_secret}',
+    }
+
+    try:
+        response = http_requests.get(
+            f'https://api.paystack.co/transaction/verify/{reference}',
+            headers=headers,
+            timeout=15
+        )
+        result = response.json()
+    except Exception:
+        return JsonResponse({'success': False, 'error': 'Could not verify payment.'}, status=500)
+
+    if result.get('status') and result['data'].get('status') == 'success':
+        order = ShopOrder.objects.filter(id=order_id).first()
+        if order:
+            order.paystack_reference = reference
+            order.payment_verified = True
+            order.status = 'paid'
+            order.status_notes = 'Payment confirmed via Paystack. Your order is being processed.'
+            order.save()
+            return JsonResponse({
+                'success': True,
+                'order_ref': order.order_ref,
+                'message': f'Payment verified! Your order reference is {order.order_ref}.'
+            })
+
+    return JsonResponse({'success': False, 'error': 'Payment verification failed.'}, status=400)

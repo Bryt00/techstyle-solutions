@@ -2,6 +2,7 @@ import random
 import string
 from django.db import models
 from django.utils.text import slugify
+from typing import TYPE_CHECKING
 
 
 def generate_booking_ref():
@@ -231,6 +232,9 @@ class PortfolioProject(models.Model):
     order = models.PositiveIntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)
 
+    if TYPE_CHECKING:
+        images: models.Manager['ProjectImage']
+
     objects = models.Manager()
 
     class Meta:
@@ -340,3 +344,122 @@ class CorePillar(models.Model):
         if not self.features_list:
             return []
         return [f.strip() for f in str(self.features_list).split('\n') if f.strip()]
+
+
+# ── Shop / E-Commerce Models ─────────────────────────────────────────────────
+
+class ShopCategory(models.Model):
+    name = models.CharField(max_length=100)
+    slug = models.SlugField(unique=True)
+    icon_name = models.CharField(max_length=50, default="package", help_text="Lucide icon name")
+    order = models.PositiveIntegerField(default=0)
+
+    objects = models.Manager()
+
+    class Meta:
+        verbose_name_plural = "Shop Categories"
+        ordering = ['order', 'name']
+
+    def __str__(self):
+        return self.name
+
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            self.slug = slugify(self.name)
+        super().save(*args, **kwargs)
+
+
+class ShopProduct(models.Model):
+    category = models.ForeignKey(ShopCategory, on_delete=models.CASCADE, related_name="products")
+    name = models.CharField(max_length=200)
+    slug = models.SlugField(unique=True)
+    description = models.TextField()
+    image = models.ImageField(upload_to='shop/products/')
+    price = models.DecimalField(max_digits=10, decimal_places=2, help_text="Selling price in GHS")
+    old_price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True, help_text="Original price (shown as strike-through if set)")
+    badge_text = models.CharField(max_length=50, blank=True, help_text="e.g. Hot Deal, New Arrival, Limited Stock")
+    in_stock = models.BooleanField(default=True)
+    is_featured = models.BooleanField(default=False, help_text="Show in featured/highlighted section")
+    specs_list = models.TextField(blank=True, help_text="Key specs separated by newlines")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    objects = models.Manager()
+
+    class Meta:
+        ordering = ['-is_featured', '-created_at']
+
+    def __str__(self):
+        return f"{self.name} — GHS {self.price}"
+
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            self.slug = slugify(self.name)
+        super().save(*args, **kwargs)
+
+    def get_specs(self):
+        if not self.specs_list:
+            return []
+        return [s.strip() for s in str(self.specs_list).split('\n') if s.strip()]
+
+    @property
+    def discount_percent(self):
+        if self.old_price and self.old_price > self.price:
+            return int(((self.old_price - self.price) / self.old_price) * 100)
+        return 0
+
+
+def generate_order_ref():
+    chars = string.ascii_uppercase + string.digits
+    code = ''.join(random.choices(chars, k=6))
+    return f"TS-{code}"
+
+
+class ShopOrder(models.Model):
+    STATUS_CHOICES = [
+        ('pending_payment', 'Pending Payment'),
+        ('paid', 'Payment Received'),
+        ('confirmed', 'Order Confirmed'),
+        ('processing', 'Processing / Packing'),
+        ('dispatched', 'Dispatched'),
+        ('delivered', 'Delivered'),
+        ('cancelled', 'Cancelled'),
+    ]
+
+    order_ref = models.CharField(max_length=15, unique=True, default=generate_order_ref)
+    customer_name = models.CharField(max_length=120)
+    customer_phone = models.CharField(max_length=20)
+    customer_email = models.EmailField()
+    delivery_address = models.TextField(help_text="Full delivery address")
+    notes = models.TextField(blank=True, help_text="Special instructions or notes")
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending_payment')
+    status_notes = models.TextField(blank=True, help_text="Internal notes / updates shown to customer")
+    total_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    paystack_reference = models.CharField(max_length=100, blank=True, help_text="Paystack transaction reference")
+    payment_verified = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    objects = models.Manager()
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"{self.order_ref} — {self.customer_name} (GHS {self.total_amount})"
+
+
+class OrderItem(models.Model):
+    order = models.ForeignKey(ShopOrder, on_delete=models.CASCADE, related_name="items")
+    product = models.ForeignKey(ShopProduct, on_delete=models.SET_NULL, null=True, related_name="order_items")
+    product_name = models.CharField(max_length=200, help_text="Snapshot of product name at time of order")
+    quantity = models.PositiveIntegerField(default=1)
+    unit_price = models.DecimalField(max_digits=10, decimal_places=2)
+
+    objects = models.Manager()
+
+    def __str__(self):
+        return f"{self.product_name} x{self.quantity}"
+
+    @property
+    def line_total(self):
+        return self.quantity * self.unit_price

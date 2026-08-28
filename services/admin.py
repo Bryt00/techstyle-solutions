@@ -4,7 +4,8 @@ from .models import (
     BusinessInfo, ServiceCategory, ServiceItem, LaptopBrand, LaptopRepairIssue,
     NetworkPackage, ServiceBooking, ContactMessage, Testimonial, FAQ,
     PortfolioProject, ProjectImage, ProjectTechnology,
-    SiteMetric, CorePillar
+    SiteMetric, CorePillar,
+    ShopCategory, ShopProduct, ShopOrder, OrderItem
 )
 
 admin.site.site_header = "TechStyle Solutions Control Desk"
@@ -174,11 +175,11 @@ class ProjectImageInline(admin.TabularInline):
     fields = ('image', 'caption', 'is_before', 'is_after', 'order', 'image_preview')
     readonly_fields = ('image_preview',)
 
+    @admin.display(description="Preview")
     def image_preview(self, obj):
         if obj.image:
             return format_html('<img src="{}" style="max-height: 60px; border-radius: 6px;" />', obj.image.url)
         return "—"
-    image_preview.short_description = "Preview"
 
 
 @admin.register(PortfolioProject)
@@ -204,11 +205,11 @@ class PortfolioProjectAdmin(admin.ModelAdmin):
     )
     ordering = ('order', '-completion_date')
 
+    @admin.display(description="Cover")
     def cover_preview(self, obj):
         if obj.cover_image:
             return format_html('<img src="{}" style="max-height: 50px; border-radius: 6px;" />', obj.cover_image.url)
         return "—"
-    cover_preview.short_description = "Cover"
 
 
 @admin.register(ProjectTechnology)
@@ -229,3 +230,100 @@ class CorePillarAdmin(admin.ModelAdmin):
     list_display = ('title', 'icon_name', 'order')
     list_editable = ('icon_name', 'order')
     ordering = ('order',)
+
+
+# ── Shop / E-Commerce Admin ─────────────────────────────────────────────────
+
+class ShopProductInline(admin.TabularInline):
+    model = ShopProduct
+    extra = 1
+    fields = ('name', 'price', 'old_price', 'in_stock', 'is_featured', 'badge_text')
+
+
+@admin.register(ShopCategory)
+class ShopCategoryAdmin(admin.ModelAdmin):
+    list_display = ('name', 'slug', 'icon_name', 'order')
+    prepopulated_fields = {'slug': ('name',)}
+    ordering = ('order',)
+    inlines = [ShopProductInline]
+
+
+@admin.register(ShopProduct)
+class ShopProductAdmin(admin.ModelAdmin):
+    list_display = ('product_preview', 'name', 'category', 'price', 'old_price', 'badge_text', 'in_stock', 'is_featured')
+    list_filter = ('category', 'in_stock', 'is_featured')
+    search_fields = ('name', 'description', 'specs_list')
+    prepopulated_fields = {'slug': ('name',)}
+    list_editable = ('price', 'old_price', 'badge_text', 'in_stock', 'is_featured')
+    fieldsets = (
+        ('Product Info', {
+            'fields': ('name', 'slug', 'category', 'description', 'specs_list')
+        }),
+        ('Pricing & Stock', {
+            'fields': ('price', 'old_price', 'badge_text', 'in_stock', 'is_featured')
+        }),
+        ('Media', {
+            'fields': ('image',)
+        }),
+    )
+
+    @admin.display(description="Image")
+    def product_preview(self, obj):
+        if obj.image:
+            return format_html('<img src="{}" style="max-height: 45px; border-radius: 6px;" />', obj.image.url)
+        return "—"
+
+
+class OrderItemInline(admin.TabularInline):
+    model = OrderItem
+    extra = 0
+    readonly_fields = ('product', 'product_name', 'quantity', 'unit_price', 'line_total_display')
+    fields = ('product_name', 'quantity', 'unit_price', 'line_total_display')
+
+    @admin.display(description="Line Total")
+    def line_total_display(self, obj):
+        return f"GHS {obj.line_total:.2f}"
+
+    def has_add_permission(self, request, obj=None):
+        return False
+
+
+@admin.action(description="Mark selected orders as Confirmed")
+def mark_order_confirmed(modeladmin, request, queryset):
+    queryset.update(status='confirmed', status_notes='Order confirmed by TechStyle team. Processing will begin shortly.')
+
+
+@admin.action(description="Mark selected orders as Dispatched")
+def mark_order_dispatched(modeladmin, request, queryset):
+    queryset.update(status='dispatched', status_notes='Your order has been dispatched and is on its way!')
+
+
+@admin.action(description="Mark selected orders as Delivered")
+def mark_order_delivered(modeladmin, request, queryset):
+    queryset.update(status='delivered', status_notes='Order delivered successfully. Thank you for shopping with TechStyle!')
+
+
+@admin.register(ShopOrder)
+class ShopOrderAdmin(admin.ModelAdmin):
+    list_display = ('order_ref', 'customer_name', 'customer_phone', 'total_amount', 'status', 'payment_verified', 'created_at')
+    list_filter = ('status', 'payment_verified', 'created_at')
+    search_fields = ('order_ref', 'customer_name', 'customer_phone', 'customer_email', 'paystack_reference')
+    list_editable = ('status',)
+    readonly_fields = ('order_ref', 'total_amount', 'paystack_reference', 'payment_verified', 'created_at', 'updated_at')
+    actions = [mark_order_confirmed, mark_order_dispatched, mark_order_delivered]
+    inlines = [OrderItemInline]
+    fieldsets = (
+        ('Order Identity', {
+            'fields': ('order_ref', 'status', 'status_notes')
+        }),
+        ('Customer Info', {
+            'fields': ('customer_name', 'customer_phone', 'customer_email', 'delivery_address', 'notes')
+        }),
+        ('Payment', {
+            'fields': ('total_amount', 'paystack_reference', 'payment_verified')
+        }),
+        ('Timestamps', {
+            'fields': ('created_at', 'updated_at'),
+            'classes': ('collapse',)
+        }),
+    )
